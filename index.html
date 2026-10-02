@@ -1,128 +1,716 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Railway Department Dashboard</title>
+    <title>Railway Department Management System</title>
 
     <style>
         * {
-            box-sizing: border-box;
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, Helvetica, sans-serif;
         }
 
         body {
-            min-height: 100vh;
-            font-family: Arial, sans-serif;
-            background: linear-gradient(135deg, #07111f, #102a43);
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            background: #080b12;
             color: white;
+            min-height: 100vh;
         }
 
-        .container {
-            width: 90%;
-            max-width: 700px;
-            padding: 45px;
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 25px;
-            text-align: center;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(15px);
+        /* Navbar */
+
+        nav {
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 7%;
+            background: rgba(10, 14, 24, 0.95);
+            border-bottom: 1px solid #20283a;
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
 
         .logo {
-            font-size: 55px;
-            margin-bottom: 10px;
-        }
-
-        h1 {
-            font-size: 30px;
-            margin-bottom: 8px;
-        }
-
-        .subtitle {
-            color: #b8c7d9;
-            margin-bottom: 30px;
-        }
-
-        .dashboard-list {
-            display: grid;
-            gap: 15px;
-        }
-
-        .dashboard {
-            display: block;
-            padding: 18px;
-            border-radius: 14px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            color: white;
-            text-decoration: none;
-            font-size: 18px;
+            font-size: 21px;
             font-weight: bold;
+            color: #4da3ff;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 30px;
+        }
+
+        .nav-links a {
+            color: #b8c2d1;
+            text-decoration: none;
+            font-size: 14px;
             transition: 0.3s;
         }
 
-        .dashboard:hover {
-            transform: translateY(-3px);
-            background: rgba(255, 255, 255, 0.18);
+        .nav-links a:hover {
+            color: #4da3ff;
         }
 
-        footer {
-            margin-top: 30px;
-            color: #8fa3b8;
+        /* Hero */
+
+        .hero {
+            min-height: 430px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 70px 20px;
+            background:
+                radial-gradient(circle at center, #102544 0%, #080b12 60%);
+        }
+
+        .hero-content {
+            max-width: 850px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border: 1px solid #2768a8;
+            border-radius: 30px;
+            color: #62b1ff;
             font-size: 13px;
+            margin-bottom: 22px;
+            background: rgba(40, 120, 200, 0.08);
+        }
+
+        .hero h1 {
+            font-size: 52px;
+            line-height: 1.1;
+            margin-bottom: 20px;
+        }
+
+        .hero h1 span {
+            color: #4da3ff;
+        }
+
+        .hero p {
+            color: #aab5c5;
+            font-size: 17px;
+            line-height: 1.7;
+            max-width: 700px;
+            margin: auto;
+        }
+
+        .hero-buttons {
+            margin-top: 30px;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 13px 25px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 14px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .primary {
+            background: #2679c9;
+            color: white;
+        }
+
+        .primary:hover {
+            background: #3192ed;
+            transform: translateY(-2px);
+        }
+
+        .secondary {
+            border: 1px solid #334157;
+            color: #d2d9e3;
+        }
+
+        .secondary:hover {
+            border-color: #4da3ff;
+            color: #4da3ff;
+        }
+
+        /* Dashboard Section */
+
+        .section {
+            padding: 70px 7%;
+        }
+
+        .section-title {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .section-title h2 {
+            font-size: 30px;
+            margin-bottom: 10px;
+        }
+
+        .section-title p {
+            color: #8e9bad;
+        }
+
+        .dashboard-grid {
+            max-width: 1100px;
+            margin: auto;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .dashboard-card {
+            background: #111722;
+            border: 1px solid #252f40;
+            border-radius: 15px;
+            padding: 25px;
+            transition: 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .dashboard-card:hover {
+            transform: translateY(-6px);
+            border-color: #348fe1;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.35);
+        }
+
+        .icon {
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            background: #162a42;
+            color: #59acff;
+            font-size: 22px;
+            margin-bottom: 18px;
+        }
+
+        .dashboard-card h3 {
+            margin-bottom: 10px;
+            font-size: 19px;
+        }
+
+        .dashboard-card p {
+            color: #8995a8;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .open-btn {
+            display: inline-block;
+            padding: 9px 15px;
+            background: #182d45;
+            color: #65b4ff;
+            border-radius: 7px;
+            text-decoration: none;
+            font-size: 13px;
+            transition: 0.3s;
+        }
+
+        .open-btn:hover {
+            background: #2679c9;
+            color: white;
+        }
+
+        /* Features */
+
+        .features {
+            background: #0d1119;
+        }
+
+        .feature-grid {
+            max-width: 1100px;
+            margin: auto;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 18px;
+        }
+
+        .feature {
+            padding: 25px;
+            border: 1px solid #222c3b;
+            border-radius: 12px;
+            background: #111722;
+        }
+
+        .feature h3 {
+            margin-bottom: 9px;
+            font-size: 16px;
+        }
+
+        .feature p {
+            color: #8995a8;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        /* Technology */
+
+        .tech {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .tech-list {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 25px;
+        }
+
+        .tech-item {
+            padding: 10px 18px;
+            border: 1px solid #2b394c;
+            border-radius: 25px;
+            color: #aeb9c8;
+            background: #101620;
+            font-size: 13px;
+        }
+
+        /* Footer */
+
+        footer {
+            text-align: center;
+            padding: 25px;
+            border-top: 1px solid #20283a;
+            color: #687487;
+            font-size: 13px;
+        }
+
+        /* Responsive */
+
+        @media (max-width: 900px) {
+
+            .dashboard-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .feature-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .hero h1 {
+                font-size: 40px;
+            }
+        }
+
+        @media (max-width: 600px) {
+
+            .nav-links {
+                display: none;
+            }
+
+            .dashboard-grid,
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .hero h1 {
+                font-size: 32px;
+            }
+
+            .hero-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .btn {
+                width: 200px;
+            }
         }
     </style>
 </head>
 
 <body>
 
-    <div class="container">
+    <!-- Navigation -->
 
-        <div class="logo">🚆</div>
+    <nav>
+        <div class="logo">RAILWAY SYSTEM</div>
 
-        <h1>Railway Department</h1>
+        <div class="nav-links">
+            <a href="#home">Home</a>
+            <a href="#dashboards">Dashboards</a>
+            <a href="#features">Features</a>
+            <a href="#technology">Technology</a>
+        </div>
+    </nav>
 
-        <p class="subtitle">
-            Railway Management & Monitoring System
-        </p>
 
-        <div class="dashboard-list">
+    <!-- Hero -->
 
-            <a class="dashboard" href="#">
-                Station Master Dashboard
-            </a>
+    <section class="hero" id="home">
 
-            <a class="dashboard" href="#">
-                Worker Dashboard
-            </a>
+        <div class="hero-content">
 
-            <a class="dashboard" href="#">
-                Division Master Dashboard
-            </a>
+            <div class="badge">
+                SMART RAILWAY MANAGEMENT SYSTEM
+            </div>
 
-            <a class="dashboard" href="#">
-                Control Office Dashboard
-            </a>
+            <h1>
+                Railway Department
+                <span>Management</span>
+            </h1>
 
-            <a class="dashboard" href="#">
-                Live Train Dashboard
-            </a>
+            <p>
+                A centralized digital platform for managing railway assets,
+                maintenance activities, workforce operations, approvals,
+                requests and live train information.
+            </p>
+
+            <div class="hero-buttons">
+
+                <a href="#dashboards" class="btn primary">
+                    Explore Dashboards
+                </a>
+
+                <a href="#features" class="btn secondary">
+                    View Features
+                </a>
+
+            </div>
 
         </div>
 
-        <footer>
-            Railway Department Management System
-        </footer>
+    </section>
 
-    </div>
+
+    <!-- Dashboards -->
+
+    <section class="section" id="dashboards">
+
+        <div class="section-title">
+
+            <h2>System Dashboards</h2>
+
+            <p>
+                Access different railway department operations from one platform.
+            </p>
+
+        </div>
+
+
+        <div class="dashboard-grid">
+
+            <!-- Station Master -->
+
+            <div class="dashboard-card">
+
+                <div class="icon">🚉</div>
+
+                <h3>Station Master</h3>
+
+                <p>
+                    Monitor station assets, requests, approvals,
+                    priority maintenance and operational activities.
+                </p>
+
+                <a href="#" class="open-btn">
+                    Open Dashboard →
+                </a>
+
+            </div>
+
+
+            <!-- Worker -->
+
+            <div class="dashboard-card">
+
+                <div class="icon">👷</div>
+
+                <h3>Worker Dashboard</h3>
+
+                <p>
+                    Manage assigned works, accepted works,
+                    active maintenance and completed tasks.
+                </p>
+
+                <a href="#" class="open-btn">
+                    Open Dashboard →
+                </a>
+
+            </div>
+
+
+            <!-- Division -->
+
+            <div class="dashboard-card">
+
+                <div class="icon">🏢</div>
+
+                <h3>Division Master</h3>
+
+                <p>
+                    Monitor division-level requests, approvals,
+                    railway assets and maintenance activities.
+                </p>
+
+                <a href="#" class="open-btn">
+                    Open Dashboard →
+                </a>
+
+            </div>
+
+
+            <!-- Control Office -->
+
+            <div class="dashboard-card">
+
+                <div class="icon">🎛️</div>
+
+                <h3>Control Office</h3>
+
+                <p>
+                    Coordinate railway operations and monitor
+                    department-level activities.
+                </p>
+
+                <a href="#" class="open-btn">
+                    Open Dashboard →
+                </a>
+
+            </div>
+
+
+            <!-- Live Train -->
+
+            <div class="dashboard-card">
+
+                <div class="icon">🚆</div>
+
+                <h3>Live Train Dashboard</h3>
+
+                <p>
+                    Monitor train movement, locations,
+                    routes and real-time operational information.
+                </p>
+
+                <a href="#" class="open-btn">
+                    View Live Trains →
+                </a>
+
+            </div>
+
+
+            <!-- AI Suggestions -->
+
+            <div class="dashboard-card">
+
+                <div class="icon">🤖</div>
+
+                <h3>AI Suggestions</h3>
+
+                <p>
+                    Analyze maintenance information and provide
+                    intelligent suggestions for railway operations.
+                </p>
+
+                <a href="#" class="open-btn">
+                    View Suggestions →
+                </a>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- Features -->
+
+    <section class="section features" id="features">
+
+        <div class="section-title">
+
+            <h2>Key Features</h2>
+
+            <p>
+                Designed to simplify railway department management.
+            </p>
+
+        </div>
+
+
+        <div class="feature-grid">
+
+            <div class="feature">
+                <h3>📊 Asset Management</h3>
+                <p>
+                    Track railway assets and maintenance requirements
+                    from a centralized dashboard.
+                </p>
+            </div>
+
+
+            <div class="feature">
+                <h3>📝 Work Requests</h3>
+                <p>
+                    Create, manage and monitor maintenance requests
+                    across departments.
+                </p>
+            </div>
+
+
+            <div class="feature">
+                <h3>✅ Approval System</h3>
+                <p>
+                    Manage station, worker and division approval
+                    workflows.
+                </p>
+            </div>
+
+
+            <div class="feature">
+                <h3>🚆 Live Monitoring</h3>
+                <p>
+                    Monitor train movement and operational
+                    information through the live dashboard.
+                </p>
+            </div>
+
+
+            <div class="feature">
+                <h3>👷 Workforce Management</h3>
+                <p>
+                    Track assigned, accepted, active and completed
+                    maintenance works.
+                </p>
+            </div>
+
+
+            <div class="feature">
+                <h3>🤖 AI Assistance</h3>
+                <p>
+                    Generate intelligent suggestions based on
+                    railway maintenance information.
+                </p>
+            </div>
+
+
+            <div class="feature">
+                <h3>🔐 Role Based Access</h3>
+                <p>
+                    Provide different dashboard access based on
+                    department and user roles.
+                </p>
+            </div>
+
+
+            <div class="feature">
+                <h3>📱 Responsive UI</h3>
+                <p>
+                    Access the management system from desktop,
+                    tablet and mobile devices.
+                </p>
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- Technology -->
+
+    <section class="tech" id="technology">
+
+        <div class="section-title">
+
+            <h2>Technology Stack</h2>
+
+            <p>
+                Technologies used to develop the railway management platform.
+            </p>
+
+        </div>
+
+        <div class="tech-list">
+
+            <div class="tech-item">HTML</div>
+            <div class="tech-item">CSS</div>
+            <div class="tech-item">JavaScript</div>
+            <div class="tech-item">React.js</div>
+            <div class="tech-item">Python</div>
+            <div class="tech-item">Django</div>
+            <div class="tech-item">FastAPI</div>
+            <div class="tech-item">REST API</div>
+            <div class="tech-item">MySQL</div>
+
+        </div>
+
+    </section>
+
+
+    <!-- Footer -->
+
+    <footer>
+
+        © 2026 Railway Department Management System |
+        Developed for Railway Operations
+
+    </footer>
+
+
+    <script>
+
+        // Smooth scrolling
+
+        document.querySelectorAll('a[href^="#"]').forEach(link => {
+
+            link.addEventListener("click", function(event) {
+
+                const target = document.querySelector(this.getAttribute("href"));
+
+                if (target) {
+
+                    event.preventDefault();
+
+                    target.scrollIntoView({
+                        behavior: "smooth"
+                    });
+
+                }
+
+            });
+
+        });
+
+
+        // Dashboard button demonstration
+
+        document.querySelectorAll(".open-btn").forEach(button => {
+
+            button.addEventListener("click", function(event) {
+
+                if (this.getAttribute("href") === "#") {
+
+                    event.preventDefault();
+
+                    alert(
+                        "Connect this button to your Django dashboard URL."
+                    );
+
+                }
+
+            });
+
+        });
+
+    </script>
 
 </body>
 </html>
-
+```
