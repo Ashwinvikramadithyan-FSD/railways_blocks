@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Division Master Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0b0b0d;--bg-raised:#141416;--bg-card:#17171a;--line:#2a2a2e;--line-soft:#212124;--text:#f2f2f0;--text-dim:#9b9ba1;--text-faint:#67676d;--red:#e5484d;--red-dim:#3a1f20;--yellow:#f2b705;--yellow-dim:#3a3016;--green:#35b350;--green-dim:#16321d;--white:#f2f2f0;--track:repeating-linear-gradient(90deg,var(--line) 0 14px,transparent 14px 28px);box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:inherit;margin:0;padding:0}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{min-height:100%;background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+::selection{background:var(--yellow);color:#141416}
+.mono{font-family:'IBM Plex Mono',monospace}
+.shell{display:flex;min-height:100vh}
+.sidebar{width:236px;flex-shrink:0;background:var(--bg-raised);border-right:1px solid var(--line);display:flex;flex-direction:column;position:-webkit-sticky;position:sticky;top:env(safe-area-inset-top,0px);height:100vh;overflow-y:auto;z-index:30}
+.brand{padding:22px 20px 18px;border-bottom:1px solid var(--line)}
+.brand .mark{width:34px;height:34px;border-radius:4px;background:linear-gradient(135deg,var(--red) 0%,var(--red) 48%,var(--yellow) 52%,var(--yellow) 100%);display:inline-flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono';font-weight:600;font-size:14px;color:#0b0b0d;margin-bottom:12px}
+.brand h1{font-size:15.5px;font-weight:600;line-height:1.3}
+.brand p{font-size:11.5px;color:var(--text-faint);margin-top:3px;font-family:'IBM Plex Mono'}
+nav{padding:14px 12px;flex:1}
+.nav-item{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:5px;color:var(--text-dim);font-size:13.5px;font-weight:500;cursor:pointer;border-left:2px solid transparent;user-select:none}
+.nav-item .dot{width:6px;height:6px;border-radius:50%;background:var(--text-faint);flex-shrink:0}
+.nav-item:hover{background:rgba(255,255,255,.03);color:var(--text)}
+.nav-item.active{background:rgba(229,72,77,.09);color:var(--white);border-left-color:var(--red)}
+.nav-item.active .dot{background:var(--red)}
+.nav-count{margin-left:auto;font-family:'IBM Plex Mono';font-size:10.5px;color:var(--text-faint);background:rgba(255,255,255,.05);padding:1px 6px;border-radius:3px}
+.sidebar-foot{padding:14px 20px 18px;border-top:1px solid var(--line);font-size:11.5px;color:var(--text-faint)}
+.live{display:flex;align-items:center;gap:7px;margin-bottom:6px;color:var(--green);font-family:'IBM Plex Mono';font-size:11px}
+.blip{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 0 3px rgba(53,179,80,.18);animation:pulse 2s infinite}
+@keyframes pulse{50%{opacity:.4}}
+.logout-link{display:block;margin-top:10px;color:var(--red);font-family:'IBM Plex Mono';font-size:11.5px;text-decoration:none;border:1px solid var(--line);padding:7px 10px;border-radius:5px;text-align:center}
+.logout-link:hover{background:rgba(229,72,77,.09)}
+.scrim{display:none}
+.main{flex:1;min-width:0}
+.topbar{position:-webkit-sticky;position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:rgba(11,11,13,.92);backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:14px 30px;display:flex;align-items:center;gap:14px}
+.tb-title{flex:1;min-width:0}
+.topbar h2{font-size:18px;font-weight:600}
+.topbar .sub{font-size:12px;color:var(--text-faint);font-family:'IBM Plex Mono';margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.menu-btn{display:none;background:none;border:1px solid var(--line);color:var(--text);width:38px;height:38px;border-radius:5px;font-size:18px;cursor:pointer;flex-shrink:0}
+.section-select{background:var(--bg-card);border:1px solid var(--line);color:var(--text);font-family:'IBM Plex Mono';font-size:12px;padding:8px 10px;border-radius:5px;min-width:190px}
+.badge-user{display:flex;align-items:center;gap:9px;padding:6px 12px 6px 6px;border:1px solid var(--line);border-radius:20px;font-size:12.5px;white-space:nowrap}
+.av{width:24px;height:24px;border-radius:50%;background:var(--yellow);color:#141416;font-family:'IBM Plex Mono';font-weight:700;font-size:11px;display:flex;align-items:center;justify-content:center}
+.content{padding:26px 30px 60px;max-width:1400px}
+.view{display:none}
+.view.active{display:block;animation:fade .18s ease}
+@keyframes fade{from{opacity:0}}
+h3.block-title{font-size:13px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.4px;margin-bottom:14px}
+.grid{display:grid;gap:16px}
+.grid-4{grid-template-columns:repeat(4,1fr)}
+.grid-2{grid-template-columns:1.4fr 1fr}
+.card{background:var(--bg-card);border:1px solid var(--line);border-radius:7px;padding:18px}
+.stat-card{position:relative;overflow:hidden;padding:14px 16px}
+.stat-card .top-line{position:absolute;top:0;left:0;right:0;height:2px}
+.stat-card .label{font-size:11.5px;color:var(--text-faint);font-family:'IBM Plex Mono'}
+.stat-card .value{font-size:24px;font-weight:600;margin-top:6px;font-variant-numeric:tabular-nums}
+.stat-card .delta{font-size:11.5px;margin-top:4px;color:var(--text-dim)}
+.badge{display:inline-flex;align-items:center;gap:5px;font-family:'IBM Plex Mono';font-size:11px;font-weight:600;padding:3px 9px;border-radius:3px;letter-spacing:.3px;white-space:nowrap}
+.badge::before{content:'';width:6px;height:6px;border-radius:50%}
+.badge-green{background:var(--green-dim);color:var(--green)}.badge-green::before{background:var(--green)}
+.badge-red{background:var(--red-dim);color:var(--red)}.badge-red::before{background:var(--red)}
+.badge-yellow{background:var(--yellow-dim);color:var(--yellow)}.badge-yellow::before{background:var(--yellow)}
+.badge-neutral{background:rgba(255,255,255,.06);color:var(--text-dim)}.badge-neutral::before{background:var(--text-faint)}
+.tw{padding:0;overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:680px}
+thead th{text-align:left;font-family:'IBM Plex Mono';font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-faint);font-weight:500;padding:14px 12px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+tbody td{padding:13px 12px;border-bottom:1px solid var(--line-soft);vertical-align:middle}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:rgba(255,255,255,.025)}
+tbody tr.selected{background:rgba(229,72,77,.07)}
+tbody.ro tr{cursor:default}
+.id-cell{font-family:'IBM Plex Mono';color:var(--text-dim);white-space:nowrap}
+.empty{color:var(--text-faint);text-align:center;padding:34px 10px;font-size:13px}
+.btn{font-family:'IBM Plex Sans';font-size:12.5px;font-weight:600;padding:8px 14px;border-radius:5px;border:1px solid var(--line);background:transparent;color:var(--text);cursor:pointer}
+.btn:hover{background:rgba(255,255,255,.04)}
+.btn-primary{background:var(--red);border-color:var(--red);color:#fff}
+.btn-primary:hover{background:#d33a3f}
+.btn-ghost{color:var(--text-dim)}
+.btn-sm{padding:6px 11px;font-size:12px}
+.filters{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.filters select,.filters input{background:var(--bg-card);border:1px solid var(--line);color:var(--text);padding:8px 11px;border-radius:5px;font-size:12.5px;font-family:'IBM Plex Sans'}
+.filters input{min-width:240px}
+.route-line{display:flex;align-items:center;margin:18px 0 6px}
+.route-node{display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:120px}
+.route-node .pin{width:14px;height:14px;border-radius:50%;border:2px solid var(--white);background:var(--bg-card);margin-bottom:8px}
+.route-node.origin .pin{border-color:var(--green);background:var(--green)}
+.route-node.dest .pin{border-color:var(--red);background:var(--red)}
+.route-node .name{font-size:13px;font-weight:600;text-align:center}
+.route-node .kind{font-size:10.5px;color:var(--text-faint);font-family:'IBM Plex Mono';margin-top:2px;text-align:center}
+.route-track{flex:1;height:2px;background:var(--track);position:relative;margin:0 -2px;top:-14px}
+.marker{position:absolute;top:-8px;left:50%;transform:translateX(-50%);background:var(--yellow);color:#141416;font-family:'IBM Plex Mono';font-weight:700;font-size:10.5px;padding:2px 8px;border-radius:10px;white-space:nowrap}
+.kv-row{display:flex;justify-content:space-between;gap:14px;padding:9px 0;border-bottom:1px solid var(--line-soft);font-size:13px}
+.kv-row:last-child{border-bottom:none}
+.kv-row .k{color:var(--text-faint);font-family:'IBM Plex Mono';font-size:11.5px;flex-shrink:0}
+.kv-row .v{font-weight:500;text-align:right}
+.ai-card{background:var(--bg-card);border:1px solid var(--line);border-left:3px solid var(--text-faint);border-radius:7px;padding:16px 18px;display:flex;gap:16px;align-items:flex-start;margin-bottom:12px}
+.priority-critical{border-left-color:var(--red)}.priority-high{border-left-color:var(--yellow)}.priority-medium{border-left-color:var(--green)}
+.ai-icon{width:36px;height:36px;border-radius:6px;background:rgba(255,255,255,.04);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px}
+.ai-body{flex:1;min-width:0}
+.ai-head{display:flex;align-items:center;gap:10px;margin-bottom:5px;flex-wrap:wrap}
+.ai-head strong{font-size:14px;font-weight:600}
+p.desc{font-size:12.5px;color:var(--text-dim);line-height:1.55;margin:6px 0 10px;max-width:620px}
+.ai-status{display:flex;gap:8px 20px;flex-wrap:wrap;margin-top:12px;font-size:11px;color:var(--text-faint);font-family:'IBM Plex Mono'}.ai-status span{display:flex;align-items:center;gap:6px}
+.ai-actions{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.ai-meta{display:flex;gap:6px 16px;flex-wrap:wrap}
+.ai-meta span{font-size:11.5px;color:var(--text-faint);font-family:'IBM Plex Mono'}
+.ai-meta b{color:var(--text-dim);font-weight:500}
+.ai-actions{flex-shrink:0;display:flex;flex-direction:column;gap:8px}
+.mini{background:var(--bg-raised);border:1px solid var(--line);color:var(--text);padding:6px 8px;border-radius:5px;font-size:12.5px;font-family:'IBM Plex Sans'}
+textarea.mini{width:100%;resize:vertical;font-family:inherit}
+.req-grid{display:grid;grid-template-columns:1.6fr 1fr;gap:16px;align-items:start}
+.detail-panel{position:sticky;top:calc(86px + env(safe-area-inset-top,0px))}
+.detail-empty{color:var(--text-faint);font-size:13px;text-align:center;padding:40px 10px}
+.detail-empty .icn{font-size:26px;display:block;margin-bottom:10px}
+.approval-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.approval-box{border:1px solid var(--line);border-radius:6px;padding:14px;text-align:center}
+.who{font-size:11px;color:var(--text-faint);font-family:'IBM Plex Mono';margin-bottom:10px;text-transform:uppercase;letter-spacing:.4px}
+.comm-shell{display:grid;grid-template-columns:280px 1fr;border:1px solid var(--line);border-radius:8px;overflow:hidden;height:560px}
+.worker-list{background:var(--bg-card);border-right:1px solid var(--line);overflow-y:auto;min-height:0}
+.worker-search{padding:12px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg-card)}
+.worker-search input{width:100%;background:var(--bg-raised);border:1px solid var(--line);color:var(--text);padding:8px 10px;border-radius:5px;font-size:12.5px}
+.worker-item{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;border-bottom:1px solid var(--line-soft);border-left:2px solid transparent}
+.worker-item:hover{background:rgba(255,255,255,.03)}
+.worker-item.active{background:rgba(229,72,77,.09);border-left-color:var(--red)}
+.wav{width:32px;height:32px;border-radius:50%;background:var(--bg-raised);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono';font-size:12px;flex-shrink:0;position:relative}
+.stat-dot{position:absolute;bottom:-1px;right:-1px;width:9px;height:9px;border-radius:50%;border:2px solid var(--bg-card)}
+.wname{font-size:13px;font-weight:500}
+.wrole{font-size:11px;color:var(--text-faint)}
+.chat-col{display:flex;flex-direction:column;background:var(--bg);min-height:0;min-width:0}
+.chat-head{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:10px}
+.chat-head .name{font-size:14px;font-weight:600}
+.chat-head .role{font-size:11.5px;color:var(--text-faint);font-family:'IBM Plex Mono'}
+.chat-body{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:12px}
+.msg{max-width:62%;padding:9px 13px;border-radius:9px;font-size:13px;line-height:1.5;overflow-wrap:anywhere}
+.msg .t{font-size:10px;margin-top:5px;font-family:'IBM Plex Mono';color:var(--text-faint)}
+.msg.in{align-self:flex-start;background:var(--bg-card);border:1px solid var(--line);border-bottom-left-radius:2px}
+.msg.out{align-self:flex-end;background:var(--red);color:#fff;border-bottom-right-radius:2px}
+.msg.out .t{color:rgba(255,255,255,.7)}
+.chat-input{padding:14px 18px;border-top:1px solid var(--line);display:flex;gap:10px}
+.chat-input input{flex:1;min-width:0;background:var(--bg-card);border:1px solid var(--line);color:var(--text);padding:11px 14px;border-radius:20px;font-size:13px}
+.chat-input button{width:40px;height:40px;border-radius:50%;background:var(--red);border:none;color:#fff;cursor:pointer;font-size:15px;flex-shrink:0}
+@media(max-width:1100px){
+ .grid-4{grid-template-columns:repeat(2,1fr)}
+ .grid-2,.req-grid{grid-template-columns:1fr}
+ .detail-panel{position:static}
+}
+@media(max-width:900px){
+ .menu-btn{display:block}
+ .sidebar{position:fixed;top:0;left:0;height:100%;transform:translateX(-100%);transition:transform .2s;padding-top:env(safe-area-inset-top,0px)}
+ .nav-open .sidebar{transform:none}
+ .nav-open .scrim{display:block;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:25}
+}
+@media(max-width:720px){
+ .topbar{padding:12px 14px;flex-wrap:wrap;gap:10px}
+ .topbar h2{font-size:16px}
+ .un{display:none}
+ .badge-user{padding:4px}
+ .section-select{order:3;flex:1 1 100%;min-width:0}
+ .content{padding:16px 14px 50px}
+ .card{padding:14px}.stat-card{padding:12px}
+ .stat-card .value{font-size:21px}
+ .grid{gap:10px}
+ .approval-grid{grid-template-columns:1fr}
+ .filters select,.filters input{flex:1 1 140px;min-width:0}
+ .filters input{flex-basis:100%}
+ .route-node{width:88px}
+ .ai-card{flex-direction:column;gap:12px}
+ .ai-actions{flex-direction:row;flex-wrap:wrap}
+ .comm-shell{grid-template-columns:1fr;grid-template-rows:200px 460px;height:auto}
+ .worker-list{border-right:none;border-bottom:1px solid var(--line)}
+ .msg{max-width:85%}
+}
+.rail-clock{display:flex;flex-direction:column;align-items:flex-end;line-height:1.2;padding:5px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg-card);flex-shrink:0}
+.rail-clock .rc-label{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.06em;color:var(--text-faint);text-transform:uppercase;white-space:nowrap}
+.rail-clock .rc-time{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:600;color:var(--green);font-variant-numeric:tabular-nums}
+.rail-clock .rc-date{font-size:10.5px;color:var(--text-dim);white-space:nowrap}
+@media(max-width:720px){.rail-clock{padding:4px 9px}.rail-clock .rc-time{font-size:15px}.rail-clock .rc-date{display:none}}
+.badge-orange{background:rgba(249,115,22,.16);color:#f97316}.badge-orange::before{background:#f97316}
+.badge-blue{background:rgba(59,130,246,.16);color:#60a5fa}.badge-blue::before{background:#60a5fa}
+@media(min-width:721px){
+ #view-requests .tw{overflow-x:visible}
+ #view-requests table{min-width:0}
+ #view-requests thead th{padding:12px 8px 10px}
+ #view-requests tbody td{padding:12px 8px}
+}
+.slot-day{font-size:11.5px;font-weight:600;color:var(--text-dim);margin:12px 0 6px;font-family:'IBM Plex Mono'}
+.slot-day span{color:var(--text-faint);font-weight:400}
+.slot-wrap{display:flex;flex-wrap:wrap;gap:6px}
+.slot-btn{background:transparent;border:1px solid var(--line);color:var(--text);border-radius:6px;padding:7px 11px;font-size:12px;cursor:pointer;font-family:'IBM Plex Mono'}
+.slot-btn:hover{border-color:var(--green)}
+.slot-btn.sel{background:rgba(53,179,80,.18);border-color:var(--green);color:var(--green)}
+.slot-scroll{max-height:230px;overflow-y:auto;padding-right:4px}
+.ai-side{min-width:200px;max-width:240px;display:flex;flex-direction:column;gap:8px;align-items:stretch}
+.ai-side .who{font-size:10.5px;color:var(--text-faint);font-family:'IBM Plex Mono';letter-spacing:.5px}
+.ai-side small{font-size:11px;color:var(--text-faint);line-height:1.45;display:block}
+.ai-side small b{color:var(--text-dim);font-weight:500}
+.ai-side .btn{width:100%;justify-content:center}
+.ai-picked{margin-top:10px;padding:8px 10px;border:1px solid var(--green);border-radius:6px;font-size:12px;color:var(--green);font-family:'IBM Plex Mono';display:none}
+@media(max-width:720px){.ai-side{max-width:none;width:100%}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="mark">DM</div>
+      <h1>Division Master<br>Dashboard</h1>
+      <p>{{ profile.user.username }} &nbsp;|&nbsp; DEPT: DIVISION</p>
+    </div>
+    <nav>
+      <div class="nav-item active" data-view="dashboard"><span class="dot"></span>Dashboard</div>
+      <div class="nav-item" data-view="ai"><span class="dot"></span>AI Suggested Work<span class="nav-count" id="aiCount">0</span></div>
+      <div class="nav-item" data-view="requests"><span class="dot"></span>Current Requests<span class="nav-count" id="rqCount">0</span></div>
+      <div class="nav-item" data-view="approvals"><span class="dot"></span>Approvals</div>
+      <div class="nav-item" data-view="worker"><span class="dot"></span>Worker Status</div>
+      <div class="nav-item" data-view="comm"><span class="dot"></span>Communication</div>
+    </nav>
+    <a href="{% url 'train_dashboard' %}" style="display:block;margin:10px 0 0;padding:9px 12px;border:1px solid var(--line);border-radius:8px;color:inherit;text-decoration:none;font-size:13px;text-align:center">&#128646; Live Train Tracking</a>
+    <div class="sidebar-foot">
+      <div class="live"><span class="blip"></span> SECTION LIVE &mdash; NORMAL</div>
+      <a class="logout-link" href="{% url 'logout' %}">Logout</a>
+    </div>
+  </aside>
+  <div class="scrim" id="scrim"></div>
+
+  <main class="main">
+    <div class="topbar">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu">&#9776;</button>
+      <div class="tb-title"><h2 id="topbarTitle">Dashboard</h2><div class="sub" id="topbarSub"></div></div>
+            <div class="rail-clock" title="Current railway time (Indian Standard Time, 24-hour)"><span class="rc-label">Railway Time &middot; IST</span><span class="rc-time" id="railTime">--:--:--</span><span class="rc-date" id="railDate">&nbsp;</span></div>
+      <select class="section-select" id="secSel" aria-label="Active section"></select>
+      <div class="badge-user"><span class="av">{{ profile.user.username|slice:":2"|upper }}</span><span class="un">{{ profile.user.username }} &middot; DM</span></div>
+    </div>
+
+    <div class="content">
+      {% if messages %}{% for m in messages %}<div class="card" style="margin-bottom:14px;border-color:var(--green)">{{ m }}</div>{% endfor %}{% endif %}
+
+      <section class="view active" id="view-dashboard">
+        <div class="grid grid-4" id="stats"></div>
+        <div class="grid grid-2" style="margin-top:16px;align-items:start">
+          <div class="card" id="overview"></div>
+          <div class="card" id="prio"></div>
+        </div>
+      </section>
+
+      <section class="view" id="view-ai">
+        <div class="filters">
+          <select id="aiPri"><option value="all">All priorities</option><option value="CRITICAL">Critical</option><option value="HIGH">High</option><option value="MEDIUM">Medium</option></select>
+          <select id="aiSec"></select>
+          <select id="aiAc"><option value="all">All worker responses</option><option value="WAITING">Waiting</option><option value="ACCEPTED">Accepted</option><option value="NOT ACCEPTED">Not accepted</option></select>
+          <input type="search" id="aiQ" placeholder="Search work item, KM, asset, worker or station...">
+          <button class="btn btn-primary btn-sm" type="button" onclick="runAiScan()">Run AI detection now</button>
+        </div>
+        <div id="aiList"></div>
+      </section>
+
+      <section class="view" id="view-requests">
+        <div class="filters">
+          <select id="rqSt"><option value="all">All statuses</option><option>OPEN</option><option>APPROVED</option><option>ACTIVE</option><option>SCHEDULED</option><option>COMPLETED</option><option>NOT APPROVED</option></select>
+          <select id="rqSec"></select>
+          <input type="search" id="rqQ" placeholder="Search request ID, work, KM or worker...">
+        </div>
+        <div class="req-grid">
+          <div class="card tw"><table><thead><tr><th>Req ID</th><th>Work Details</th><th>Priority</th><th>Section</th><th>Location</th><th>Date</th><th>Start</th><th>End</th><th>Status</th></tr></thead><tbody id="reqBody"></tbody></table></div>
+          <div class="card detail-panel" id="reqDetail"></div>
+        </div>
+      </section>
+
+      <section class="view" id="view-approvals">
+        <div class="filters">
+          <select id="apSt"><option value="all">All statuses</option><option value="APPROVED">Approved</option><option value="NOT APPROVED">Not Approved</option><option value="WAITING">Waiting</option></select>
+          <select id="apSec"></select>
+        </div>
+        <div class="card tw"><table><thead><tr><th>Req ID</th><th>Work Details</th><th>Priority</th><th>Division</th><th>Section</th><th>Station Control</th><th>Division Control</th></tr></thead><tbody class="ro" id="apBody"></tbody></table></div>
+      </section>
+
+      <section class="view" id="view-worker">
+        <div class="filters">
+          <select id="wkSt"><option value="all">All statuses</option><option value="ASSIGNED">Assigned</option><option value="ACCEPTED">Accepted</option><option value="NOT ACCEPTED">Not Accepted</option><option value="WAITING">Waiting</option></select>
+          <select id="wkSec"></select>
+        </div>
+        <div class="card tw"><table><thead><tr><th>Req ID</th><th>Assigned Worker</th><th>Work Details</th><th>Priority</th><th>Section</th><th>Acceptance</th><th>Status</th><th>Reporting Time</th><th>Start Time</th><th>End Time</th></tr></thead><tbody class="ro" id="wkBody"></tbody></table></div>
+      </section>
+
+      <section class="view" id="view-comm">
+        <div class="filters" style="margin-bottom:14px">
+          <button class="btn btn-sm btn-primary" id="commTabWorkers" onclick="setCommTab('workers')">Workers</button>
+          <button class="btn btn-sm" id="commTabSTATION" onclick="setCommTab('STATION')">Station Control</button>
+          <button class="btn btn-sm" id="commTabCTRL" onclick="setCommTab('CTRL')">Control Office</button>
+        </div>
+        <div class="comm-shell" id="commWorkers">
+          <div class="worker-list">
+            <div class="worker-search"><input type="search" id="wQ" placeholder="Search workers..."></div>
+            <div id="wItems"></div>
+          </div>
+          <div class="chat-col">
+            <div class="chat-head"><div><div class="name" id="chatName"></div><div class="role" id="chatRole"></div></div><span id="chatStatus"></span></div>
+            <div class="chat-body" id="chatBody"></div>
+            <div class="chat-input"><input type="text" id="chatInput" placeholder="Type a message to the worker..."><button onclick="sendMsg()" aria-label="Send">&#10148;</button></div>
+          </div>
+        </div>
+        <div class="card" id="commDept" style="display:none;padding:0;overflow:hidden">
+          <div class="chat-col" style="height:560px">
+            <div class="chat-head"><div><div class="name" id="deptChatName"></div></div></div>
+            <div class="chat-body" id="deptChatBody"></div>
+            <div class="chat-input"><input type="text" id="deptChatInput" placeholder="Type a message..."><button onclick="sendDeptMsg()" aria-label="Send">&#10148;</button></div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<div id="naiModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:999;align-items:center;justify-content:center;padding:16px">
+   <div class="card" style="max-width:460px;width:100%;padding:20px;max-height:90vh;overflow-y:auto">
+     <h3 class="block-title">Not Approved &mdash; message &amp; new time</h3>
+     <p class="desc" id="naiSub" style="margin-bottom:10px"></p>
+     <textarea class="mini" id="naiReason" rows="3" placeholder="Write your message to the worker (why this time is not approved)..." style="width:100%"></textarea>
+     <div class="kv-row" style="margin-top:10px"><span class="k">RESCHEDULE DATE <small style="color:var(--text-faint)">(optional)</small></span><span class="v"><input type="date" class="mini" id="naiDay"></span></div>
+     <button class="btn btn-primary btn-sm" type="button" style="width:100%;margin-top:10px" onclick="naiShowSlots()">Reschedule time</button>
+     <p class="desc" style="font-size:11.5px;margin:6px 0 0">Only times that stay 15 minutes clear before and after every train are shown, each as long as the work duration. Each time is checked from 15 minutes before it to 15 minutes after it (for example 3:00&ndash;4:00 is checked for trains from 2:45 to 4:15); hover a time to see the range.</p>
+     <div id="naiSlots" class="slot-scroll" style="margin-top:8px"></div>
+     <div id="naiPicked" class="ai-picked"></div>
+     <div id="naiErr" class="desc" style="display:none;color:var(--red);margin-top:8px"></div>
+     <div style="display:flex;gap:8px;margin-top:14px">
+       <button class="btn btn-primary btn-sm" style="flex:1" onclick="naiSubmit()">Send message &amp; time</button>
+       <button class="btn btn-ghost btn-sm" style="flex:1" onclick="naiClose()">Cancel</button>
+     </div>
+   </div>
+ </div>
+
+{{ page_data|json_script:"page-data" }}
+<script>
+const PAGE=JSON.parse(document.getElementById('page-data').textContent);
+const S=PAGE.S, A=PAGE.A, R=PAGE.R, M=PAGE.M, TODAY=PAGE.todayAssets||[];
+const CSRF="{{ csrf_token }}";
+const URLS={approve:"{% url 'approve_request' 0 %}",reject:"{% url 'reject_request' 0 %}",reschedule:"{% url 'reschedule_request' 0 %}",message:"{% url 'send_request_message' 0 %}",scan:"{% url 'ai_scan' %}",slots:"{% url 'request_slots' 0 %}",aiNotApprove:"{% url 'ai_not_approve' 0 %}"};
+const DEPT_MSG_URL="{% url 'send_message' %}";
+const CONTACTS=PAGE.contacts||[];
+function urlFor(kind,id){return URLS[kind].replace('/0/','/'+id+'/')}
+function postForm(url,data,tab){
+  const fd=new FormData();fd.append('csrfmiddlewaretoken',CSRF);fd.append('tab',tab||'requests');
+  Object.entries(data||{}).forEach(([k,v])=>fd.append(k,v));
+  fetch(url,{method:'POST',body:fd}).then(()=>location.reload());
+}
+
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const C={OPEN:'red',ASSIGNED:'blue',ACTIVE:'green',COMPLETED:'green','NOT ACCEPTED':'red','NOT APPROVED':'red',REJECTED:'red','IN PROGRESS':'yellow',WAITING:'yellow',SCHEDULED:'neutral',RESCHEDULED:'yellow',CLOSED:'green',ACCEPTED:'green',APPROVED:'green',CRITICAL:'red',HIGH:'yellow',MEDIUM:'green'};
+const B=v=>`<span class="badge badge-${C[v]||'neutral'}">${v}</span>`;
+const PC={CRITICAL:'red',HIGH:'orange',MEDIUM:'yellow',LOW:'green',NORMAL:'blue'};
+const PB=p=>{const v=String(p||'Normal').toUpperCase();return `<span class="badge badge-${PC[v]||'neutral'}">${v}</span>`};
+const IC={CRITICAL:'\u26a0',HIGH:'\ud83d\udd27',MEDIUM:'\ud83d\udd0c',LOW:'\ud83d\udee0',NORMAL:'\ud83d\udee0'};
+const p2=n=>String(n).padStart(2,'0');
+const kv=(k,v)=>`<div class="kv-row"><span class="k">${k}</span><span class="v">${v}</span></div>`;
+const hit=(arr,q)=>!q||arr.join(' ').toLowerCase().includes(q);
+const emptyRow=n=>`<tr><td colspan="${n}" class="empty">No matching records.</td></tr>`;
+let selId=R.length?R[0].reqId:null, cw=R.length?R[0].id:null;
+let reschedEdit=new Set();
+
+const SO='<option value="all">All sections</option>'+S.map((s,i)=>`<option value="${i}">${s.n}</option>`).join('');
+['aiSec','rqSec','apSec','wkSec'].forEach(id=>$(id).innerHTML=SO);
+$('secSel').innerHTML='<option value="all">All sections (every asset)</option>'+S.map((s,i)=>`<option value="${i}">Section: ${s.n}</option>`).join('');
+
+const T={dashboard:['Dashboard'],ai:['AI Suggested Work','MODEL-FLAGGED MAINTENANCE ITEMS'],requests:['Current Requests','ALL OPEN & RECENT WORK REQUESTS'],approvals:['Approvals','STATION CONTROL \u2022 DIVISION CONTROL'],worker:['Worker Status','ACCEPTANCE & REPORTING'],comm:['Communication','DIRECT MESSAGING WITH FIELD WORKERS']};
+function goTo(k){
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.view===k));
+  document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id==='view-'+k));
+  $('topbarTitle').textContent=T[k][0];
+  $('secSel').style.display=k==='dashboard'?'':'none';
+  document.body.classList.remove('nav-open');
+  if(k==='dashboard')renderDash();else $('topbarSub').textContent=T[k][1];
+  window.scrollTo(0,0);
+}
+document.querySelectorAll('.nav-item').forEach(n=>n.addEventListener('click',()=>goTo(n.dataset.view)));
+$('menuBtn').onclick=()=>document.body.classList.toggle('nav-open');
+$('scrim').onclick=()=>document.body.classList.remove('nav-open');
+(function(){const h=(location.hash||'#dashboard').slice(1);if(T[h])goTo(h)})();
+
+function allSecHtml(){
+  return `<h3 class="block-title">All Sections &mdash; Asset Count</h3>`+S.map((s,k)=>{
+    const n=R.filter(x=>x.s===k).length;
+    return `<div style="padding:9px 0;border-bottom:1px solid var(--line-soft);display:flex;justify-content:space-between;gap:10px;font-size:13px"><span>${esc(s.n)} <span style="color:var(--text-faint)">${esc(s.fs||'')}${s.ts?' &rarr; '+esc(s.ts):''}</span></span><b>${n} asset${n===1?'':'s'}</b></div>`}).join('');
+}
+function renderDash(){
+  const sv=$('secSel').value,all=(sv==='all'||sv===''),i=all?0:(+sv||0),s=all?null:S[i],r=all?R.slice():R.filter(x=>x.s===i),a=(all?A.slice():A.filter(x=>x.s===i)).sort((x,y)=>({CRITICAL:0,HIGH:1,MEDIUM:2}[x.p]-{CRITICAL:0,HIGH:1,MEDIUM:2}[y.p])),aToday=a.filter(x=>x.dISO===PAGE.today);
+  const n=(k,v)=>r.filter(x=>x[k]===v).length;
+  $('topbarSub').textContent=(all?'All sections':(s?s.n:''));
+  $('stats').innerHTML=[
+    ['red','OPEN REQUESTS',p2(r.filter(x=>!['COMPLETED','NOT APPROVED'].includes(x.st)).length),r.filter(x=>x.dv==='WAITING'||x.decision===null).length+' awaiting approval'],
+    ['yellow','AI SUGGESTIONS',p2(a.length),a.filter(x=>x.p==='CRITICAL').length+' marked critical'],
+    ['green','WORKERS ACCEPTED',p2(n('ac','ACCEPTED'))+' / '+p2(r.length),(r.length-n('ac','ACCEPTED'))+' pending response'],
+    ['white','DIVISION APPROVED',p2(n('dv','APPROVED'))+' / '+p2(r.length),n('dv','NOT APPROVED')+' not approved']
+  ].map(c=>`<div class="card stat-card"><div class="top-line" style="background:var(--${c[0]})"></div><div class="label">${c[1]}</div><div class="value">${c[2]}</div><div class="delta">${c[3]}</div></div>`).join('');
+  $('overview').innerHTML=all?allSecHtml():s?`<h3 class="block-title">Active Section &mdash; Junction &amp; Station Overview</h3>
+    <div class="route-line"><div class="route-node origin"><div class="pin"></div><div class="name">${(s.fj||'\u2014').toUpperCase()}</div><div class="kind">FROM JUNCTION</div></div><div class="route-track"><span class="marker">${s.id}</span></div><div class="route-node dest"><div class="pin"></div><div class="name">${(s.tj||'\u2014').toUpperCase()}</div><div class="kind">TO JUNCTION</div></div></div>
+    ${kv('SECTION',s.n)}${kv('FROM STATION',s.fs||'\u2014')}${kv('TO STATION',s.ts||'\u2014')}${kv('WORK LOCATION','KM '+(s.km||'\u2014'))}${kv('TRACK / LINE',s.ln||'\u2014')}`:'<div class="empty">No section data yet.</div>';
+  const t=aToday[0];
+  $('prio').innerHTML=`<h3 class="block-title">Today's Priority Item</h3>`+(TODAY.length?
+    `<div>${TODAY.map(x=>`
+      <div style="padding:10px 0;border-bottom:1px solid var(--line-soft)">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+          <div style="font-size:13.5px;font-weight:600">${esc(x.t)} &mdash; KM ${esc(x.km)}</div>
+          <span>${B(x.p)}${['APPROVED','ACTIVE','COMPLETED','NOT APPROVED'].includes(x.st)?' '+B(x.st):''}</span>
+        </div>
+        <p class="desc" style="margin:6px 0 0">${esc(x.d)}</p>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
+          <span class="badge badge-neutral">${esc(x.as)}</span>
+          <span class="badge badge-neutral">${esc(S[x.s]?S[x.s].n:'\u2014')}</span>
+          <span class="badge badge-neutral">${esc(x.dt)}</span>
+        </div>
+      </div>`).join('')}</div>`:
+    `<div class="empty">No assets detected today.</div>`);
+}
+function reviewAI(i){$('aiSec').value=i;$('aiPri').value='all';$('aiQ').value='';renderAI();goTo('ai')}
+
+const ME='DIVISION';
+const WSTAT={WAITING:'WAITING',ACCEPTED:'ACCEPTED','NOT ACCEPTED':'REJECTED'};
+const wsBadge=v=>`<span class="badge badge-${v==='ACCEPTED'?'green':v==='NOT ACCEPTED'?'red':v==='ASSIGNED'?'blue':'yellow'}">${WSTAT[v]||v}</span>`;
+function aiPlaceBits(a){
+  const p=[];
+  if(a.fs||a.ts)p.push(`STATION <b>${esc(a.fs||'\u2014')} &rarr; ${esc(a.ts||'\u2014')}</b>`);
+  if(a.fj||a.tj)p.push(`JUNCTION <b>${esc(a.fj||'\u2014')} &rarr; ${esc(a.tj||'\u2014')}</b>`);
+  if(a.div)p.push(`DIVISION <b>${esc(a.div)}</b>`);
+  if(a.loc)p.push(`LOCATION <b>${esc(a.loc)}</b>`);
+  return p;
+}
+// Who changed the time (a master or the worker) and what they wrote.
+function aiTimeNote(a){
+  const st='margin:8px 0 0;color:var(--yellow)';
+  if(a.rby==='STATION'||a.rby==='DIVISION'||a.rby==='CTRL')
+    return `<p class="desc" style="${st}">Time changed by <b>${esc(a.rbyLabel)}</b> to ${esc(a.date)} ${esc(a.stm)}&ndash;${esc(a.etm)}.${a.rmsg?' Message: '+esc(a.rmsg):''}</p>`;
+  if(a.rby==='WORKER')
+    return `<p class="desc" style="${st}">Worker <b>${esc(a.worker||'')}</b> did not accept${a.wr?' &mdash; '+esc(a.wr):''}. New time asked: ${esc(a.wnew||(a.date+' '+a.stm+'\u2013'+a.etm))}.</p>`;
+  return '';
+}
+// Right side of the card: Approve / Not Approved (and the assigned worker under them), or the worker's status.
+function aiSide(a){
+  const who=a.worker?`<small>Worker assigned: <b>${esc(a.worker)}${a.wdept?' ('+esc(a.wdept)+')':''}</b></small>`:'<small>No worker assigned</small>';
+  if(a.own==='WAITING')
+    return `<div class="ai-side"><button class="btn btn-primary btn-sm" onclick="aiApprove(${a.reqId})">Approve</button><button class="btn btn-ghost btn-sm" onclick="aiReject(${a.reqId})">Not Approved</button>${who}</div>`;
+  let note='';
+  if(a.own==='APPROVED')note=a.rby===ME?'<small>You changed the time and approved it.</small>':'<small>You approved this time.</small>';
+  else if(a.own==='NOT APPROVED')note='<small>You did not approve'+(a.reason?': '+esc(a.reason):'')+'.</small>';
+  return `<div class="ai-side"><span class="who">WORKER STATUS</span>${wsBadge(a.ac)}${note}${who}</div>`;
+}
+function aiCardHtml(a){
+  const sec=S[a.s]?S[a.s].n:'Unassigned';
+  const row1=[`SECTION <b>${esc(sec)}</b>`,`KM <b>${esc(a.km||'\u2014')}</b>`,`ASSET <b>${esc(a.as||'\u2014')}</b>`,
+    `WORKER <b>${esc(a.worker||'Not assigned')}${a.wdept?' ('+esc(a.wdept)+')':''}</b>`,`DETECTED <b>${esc(a.dt)}</b>`];
+  const row2=aiPlaceBits(a).concat([`TIME <b>${esc(a.date)} ${esc(a.stm)}&ndash;${esc(a.etm)}${a.dur&&a.dur!=='\u2014'?' ('+esc(a.dur)+')':''}</b>`,`TRAINS CHECKED <b>${a.trains||0}</b>`]);
+  const meta=`<div class="ai-meta">${row1.map(x=>`<span>${x}</span>`).join('')}</div><div class="ai-meta" style="margin-top:6px">${row2.map(x=>`<span>${x}</span>`).join('')}</div>`;
+  const status=`<div class="ai-status"><span>STATION MASTER ${B(a.sm)}</span><span>DIVISION MASTER ${B(a.dm)}</span><span>WORKER ${wsBadge(a.ac)}</span>${a.cap?'<span>APPROVED BY CONTROL OFFICE</span>':''}${a.aap?'<span>APPROVED BY AI (no train in buffer / work time)</span>':''}${['APPROVED','ACTIVE','COMPLETED','NOT APPROVED'].includes(a.st)?`<span>STATUS ${B(a.st)}</span>`:''}</div>`;
+  return `<div class="ai-card priority-${a.p.toLowerCase()}"><div class="ai-icon">${IC[a.p]||'\u2699'}</div><div class="ai-body"><div class="ai-head"><strong>${esc(a.t)}</strong>${B(a.p)}</div><p class="desc">${esc(a.d)}</p>${meta}${status}${aiTimeNote(a)}</div><div class="ai-actions">${aiSide(a)}</div></div>`;
+}
+function renderAI(){
+  const p=$('aiPri').value,s=$('aiSec').value,ac=$('aiAc').value,q=$('aiQ').value.trim().toLowerCase();
+  const L=A.filter(a=>(p==='all'||a.p===p)&&(s==='all'||a.s===+s)&&(ac==='all'||a.ac===ac)&&hit([a.t,a.d,a.as,'km '+a.km,S[a.s]?S[a.s].n:'',a.p,a.worker,a.fs,a.ts,a.fj,a.tj,a.div],q));
+  $('aiList').innerHTML=L.length?L.map(aiCardHtml).join(''):'<div class="card empty">No AI suggestions yet. The AI suggests an asset only when its worker is idle and a train-free window exists. Press "Run AI detection now" to check again.</div>';
+  $('aiCount').textContent=A.length;
+}
+function aiApprove(id){postForm(urlFor('approve',id),{worker_id:''},'ai')}
+
+// Free times, grouped by day. Each button is exactly as long as the asset's work duration.
+function drawSlotGroups(box,j,onPick){
+  if(!j.ok){box.innerHTML='<div class="desc">'+esc(j.error||'Could not load times.')+'</div>';return}
+  const KIND={today:'today, earlier option',before:'nearest earlier day',after:'next day with free time'};
+  let h='<div class="desc" style="margin-bottom:6px">Free <b>'+esc(j.duration)+'</b> windows (this asset\'s work duration) with no train on the line:</div>';
+  if(j.note)h+='<div class="desc" style="margin-bottom:6px;color:var(--yellow)">'+esc(j.note)+'</div>';
+  if(!(j.groups||[]).length)h+='<div class="desc">No free time found.</div>';
+  (j.groups||[]).forEach(g=>{
+    h+='<div class="slot-day">'+esc(g.label)+(KIND[g.kind]?' <span>&middot; '+KIND[g.kind]+'</span>':'')+'</div><div class="slot-wrap">'
+      +g.slots.map(x=>'<button type="button" class="slot-btn" data-si="'+x.start_iso+'" data-ei="'+x.end_iso+'" data-d="'+x.date+'" data-s="'+x.start+'" data-e="'+x.end+'" data-l="'+esc(x.label)+'" title="'+esc(x.checked||'')+'">'+x.start+'&ndash;'+x.end+'</button>').join('')+'</div>';
+  });
+  box.innerHTML=h;
+  box.querySelectorAll('.slot-btn').forEach(b=>b.addEventListener('click',()=>{
+    box.querySelectorAll('.slot-btn').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');onPick(b.dataset);
+  }));
+}
+let naiId=null,naiPick=null,naiTab='ai';
+// One pop-up for both pages: AI Suggested Work (tab 'ai') and Current Requests (tab 'requests').
+function openNai(id,tab,a){
+  naiId=id;naiPick=null;naiTab=tab;
+  $('naiSub').innerHTML=a?esc(a.t||a.w||'')+' &middot; work duration <b>'+esc(a.dur||'\u2014')+'</b> &middot; now '+esc(a.date)+' '+esc(a.stm)+'&ndash;'+esc(a.etm):'';
+  $('naiReason').value='';$('naiDay').value='';$('naiSlots').innerHTML='';
+  $('naiPicked').style.display='none';naiErr('');
+  $('naiModal').style.display='flex';
+  setTimeout(()=>$('naiReason').focus(),50);
+}
+function aiReject(id){openNai(id,'ai',A.find(x=>x.reqId===id))}
+function naiClose(){$('naiModal').style.display='none';naiId=null}
+function naiErr(t){const e=$('naiErr');e.textContent=t||'';e.style.display=t?'block':'none'}
+function naiShowSlots(){
+  const box=$('naiSlots'),d=$('naiDay').value;
+  naiErr('');naiPick=null;$('naiPicked').style.display='none';
+  box.innerHTML='<div class="desc">Checking live trains...</div>';
+  fetch(urlFor('slots',naiId)+(d?'?date='+encodeURIComponent(d):''),{credentials:'same-origin'})
+    .then(r=>r.json()).then(j=>drawSlotGroups(box,j,x=>{
+      naiPick={si:x.si,ei:x.ei};naiErr('');
+      const pk=$('naiPicked');pk.textContent='New time selected: '+x.l;pk.style.display='block';
+    })).catch(()=>{box.innerHTML='<div class="desc">Network error - try again.</div>'});
+}
+function naiSubmit(){
+  const reason=$('naiReason').value.trim();
+  if(!reason){naiErr('Please write your message to the worker.');return}
+  if(!naiPick){naiErr('Please press "Reschedule time" and choose one of the free times.');return}
+  const fd=new FormData();fd.append('csrfmiddlewaretoken',CSRF);
+  fd.append('reason',reason);fd.append('start',naiPick.si+':00');fd.append('end',naiPick.ei+':00');
+  fetch(urlFor('aiNotApprove',naiId),{method:'POST',body:fd,credentials:'same-origin'})
+    .then(r=>r.json().then(j=>({ok:r.ok,j})))
+    .then(({ok,j})=>{if(ok&&j.ok){location.hash=naiTab;location.reload()}else naiErr((j&&j.error)||'Could not submit.')})
+    .catch(()=>naiErr('Network error - try again.'));
+}
+function runAiScan(){postForm(URLS.scan,{},'ai')}
+function raise(s){$('rqSec').value=s;$('rqSt').value='all';$('rqQ').value='';renderReq();goTo('requests')}
+
+function statusCell(r){
+  if(r.st==='COMPLETED')return B('COMPLETED');            // finished: show only COMPLETED
+  if(r.st==='NOT APPROVED')return B('NOT APPROVED');      // not approved by the start time: show only NOT APPROVED
+  if(r.decision==='APPROVED')return B('APPROVED')+(['ACTIVE','COMPLETED'].includes(r.st)?' '+B(r.st):'');
+  if(r.decision==='NOT APPROVED')return B('NOT APPROVED')+(r.resch?' <span class="badge badge-yellow">RESCHEDULED</span>':'');
+  return `<div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-primary btn-sm" onclick="event.stopPropagation();approveReq(${r.reqId})">Approve</button><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();notApproveReq(${r.reqId})">Not Approved</button></div>`;
+}
+function renderReq(){
+  const st=$('rqSt').value,s=$('rqSec').value,q=$('rqQ').value.trim().toLowerCase();
+  const L=R.filter(r=>(st==='all'||r.st===st)&&(s==='all'||r.s===+s)&&hit([r.id,r.w,'km '+r.km,r.wk,S[r.s].n],q));
+  if(!L.some(r=>r.reqId===selId))selId=L.length?L[0].reqId:null;
+  $('reqBody').innerHTML=L.length?L.map(r=>`<tr class="${r.reqId===selId?'selected':''}" data-id="${r.reqId}"><td class="id-cell">${r.id}</td><td>${esc(r.w)}</td><td>${PB(r.pr)}</td><td>${esc(S[r.s].n)}</td><td class="mono">KM ${esc(r.km)}</td><td class="mono">${r.date}</td><td class="mono">${r.stm}</td><td class="mono">${r.etm}</td><td>${statusCell(r)}</td></tr>`).join(''):emptyRow(9);
+  $('rqCount').textContent=R.filter(r=>!['COMPLETED','NOT APPROVED'].includes(r.st)).length;
+  renderDetail();
+}
+function approveReq(reqId){
+  const r=R.find(x=>x.reqId===reqId);
+  let workerId='';
+  if(r && !r.wk){
+    const w=PAGE.workers||[];
+    if(!w.length){alert('No workers are registered yet — ask a worker to register before approving this.');return}
+    const pick=prompt('Assign a worker for '+r.id+':\n'+w.map(x=>x.username).join(', '), w[0].username);
+    if(pick===null)return;
+    const found=w.find(x=>x.username.toLowerCase()===pick.trim().toLowerCase());
+    if(!found){alert('No worker with that username.');return}
+    workerId=found.id;
+  }
+  postForm(urlFor('approve',reqId),{worker_id:workerId},'requests');
+}
+function notApproveReq(reqId){selId=reqId;renderReq();openNai(reqId,'requests',R.find(x=>x.reqId===reqId))}
+function setPick(id,v){const el=$(id);if(el._flatpickr)el._flatpickr.setDate(v,false);else el.value=v}
+function rgError(t){const e=$('rgErr');e.textContent=t||'';e.style.display=t?'block':'none'}
+function showSlots(reqId){
+  const box=$('rgSlots'),d=$('rgDate').value;
+  rgError('');box.innerHTML='<div class="desc">Checking live trains...</div>';
+  fetch(urlFor('slots',reqId)+(d?'?date='+encodeURIComponent(d):''),{credentials:'same-origin'})
+    .then(r=>r.json()).then(j=>drawSlotGroups(box,j,x=>{setPick('rgDate',x.d);setPick('rgStart',x.s);setPick('rgEnd',x.e);rgError('')}))
+    .catch(()=>{box.innerHTML='<div class="desc">Network error - try again.</div>'});
+}
+function saveReqResched(reqId){
+  const d=$('rgDate').value,st=$('rgStart').value,et=$('rgEnd').value;
+  if(!d||!st||!et){rgError('Please fill in the new date, start time and end time.');return}
+  let ed=d;if(et<=st){const t=new Date(d+'T00:00:00');t.setDate(t.getDate()+1);ed=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0')}
+  const fd=new FormData();fd.append('csrfmiddlewaretoken',CSRF);fd.append('tab','requests');fd.append('ajax','1');
+  fd.append('start',`${d}T${st}:00`);fd.append('end',`${ed}T${et}:00`);
+  fetch(urlFor('reschedule',reqId),{method:'POST',body:fd,credentials:'same-origin'})
+    .then(r=>r.json().then(j=>({ok:r.ok,j})))
+    .then(({ok,j})=>{if(ok&&j.ok){location.hash='requests';location.reload()}else rgError(j.error||'Could not reschedule.')})
+    .catch(()=>rgError('Network error - try again.'));
+}
+function reopenResched(reqId){reschedEdit.add(reqId);renderDetail()}
+function renderDetail(){
+  const r=R.find(x=>x.reqId===selId),el=$('reqDetail');
+  if(!r){el.innerHTML='<div class="detail-empty"><span class="icn">&#128269;</span>No request to show</div>';return}
+  const s=S[r.s];
+  if(reschedEdit.has(r.reqId)){
+    el.innerHTML=`<h3 class="block-title">${r.resch?'Edit Reschedule':'Reschedule'} &mdash; ${r.id}</h3>
+      ${r.resch?'':kv('REASON',esc(r.reason||'\u2014'))}
+      <div class="kv-row"><span class="k">NEW DATE</span><span class="v"><input type="date" class="mini" id="rgDate"></span></div>
+      <div class="kv-row"><span class="k">NEW START</span><span class="v"><input type="time" class="mini" id="rgStart" value="${r.stm}"></span></div>
+      <div class="kv-row"><span class="k">NEW END</span><span class="v"><input type="time" class="mini" id="rgEnd" value="${r.etm}"></span></div>
+      <button class="btn btn-ghost btn-sm" type="button" style="width:100%;margin-top:14px" onclick="showSlots(${r.reqId})">Show next available times</button>
+      <div id="rgSlots" style="margin-top:10px"></div>
+      <div id="rgErr" class="desc" style="display:none;color:var(--red);margin-top:10px"></div>
+      <button class="btn btn-primary btn-sm" style="width:100%;margin-top:14px" onclick="saveReqResched(${r.reqId})">Save &amp; Notify Worker</button>`;
+    return;
+  }
+  el.innerHTML=`<h3 class="block-title">Request Detail &mdash; ${r.id}</h3>${kv('WORK',esc(r.w))}${kv('DIVISION',esc(r.div||'\u2014'))}${kv('SECTION',esc(s.n))}${kv('FROM JUNCTION',esc(s.fj||'\u2014'))}${kv('TO JUNCTION',esc(s.tj||'\u2014'))}${kv('FROM STATION',esc(s.fs||'\u2014'))}${kv('TO STATION',esc(s.ts||'\u2014'))}${kv('WORK LOCATION','KM '+esc(r.km))}${kv('DATE',r.date)}${kv('START TIME',r.stm)}${kv('END TIME',r.etm)}${kv('REQUEST STATUS',B(r.st))}${kv('STATION APPROVAL',r.decision?B(r.decision):'<span class="badge badge-neutral">PENDING</span>')}
+  ${r.decision==='NOT APPROVED'?kv('NOT APPROVED REASON',esc(r.reason||'\u2014')):''}
+  ${(r.rby==='STATION'||r.rby==='DIVISION'||r.rby==='CTRL')?kv('TIME CHANGED BY',esc(r.rbyLabel))+(r.rmsg?kv('MESSAGE',esc(r.rmsg)):''):''}
+  ${r.resch?`<div style="margin-top:10px"><button class="btn btn-ghost btn-sm" onclick="reopenResched(${r.reqId})">Edit Reschedule</button></div>`:''}
+  <h3 class="block-title" style="margin-top:20px">Approval Status</h3>${r.cap?'<p class="desc" style="margin:0 0 8px;color:var(--green)">Approved by the Control Office (the masters did not decide in time).</p>':''}${r.aap?'<p class="desc" style="margin:0 0 8px;color:var(--green)">Approved automatically by the AI: no train is detected during the buffer, start and end time.</p>':''}<div class="approval-grid"><div class="approval-box"><div class="who">Station Control</div>${B(r.dv)}</div><div class="approval-box"><div class="who">Division Control</div>${B(r.ct)}</div></div>
+  <h3 class="block-title" style="margin-top:20px">Worker Acceptance</h3>${kv('ASSIGNED WORKER',esc(r.wk)+' ('+esc(r.rl)+')')}${kv('ACCEPTANCE',B(r.ac))}${kv('REPORTING TIME',r.rp)}
+  <button class="btn btn-sm" style="width:100%;margin-top:16px" onclick="msg('${r.id}')">Message Worker</button>`;
+}
+$('reqBody').addEventListener('click',e=>{
+  const tr=e.target.closest('tr[data-id]');if(!tr)return;
+  selId=+tr.dataset.id;renderReq();
+  if(innerWidth<=1100)$('reqDetail').scrollIntoView({behavior:'smooth',block:'start'});
+});
+function msg(id){cw=id;$('wQ').value='';setCommTab('workers');renderComm();goTo('comm')}
+
+let activeDept=null;
+function setCommTab(tab){
+  document.querySelectorAll('#view-comm .filters .btn').forEach(b=>b.classList.remove('btn-primary'));
+  if(tab==='workers'){
+    $('commTabWorkers').classList.add('btn-primary');
+    $('commWorkers').style.display='';
+    $('commDept').style.display='none';
+    return;
+  }
+  $('commWorkers').style.display='none';
+  $('commDept').style.display='';
+  $('commTab'+tab).classList.add('btn-primary');
+  activeDept=tab;
+  renderDeptChat();
+}
+function renderDeptChat(){
+  const c=CONTACTS.find(x=>x.code===activeDept);
+  $('deptChatName').textContent=c?c.label:'';
+  $('deptChatBody').innerHTML=(c&&c.messages.length)?c.messages.map(m=>`<div class="msg ${m.dir}">${esc(m.t)}<div class="t">${m.time}</div></div>`).join(''):'<div class="empty">No messages yet. Send the first one below.</div>';
+  $('deptChatBody').scrollTop=1e6;
+}
+function sendDeptMsg(){
+  const i=$('deptChatInput'),v=i.value.trim();if(!v||!activeDept)return;
+  postForm(DEPT_MSG_URL,{department:activeDept,body:v},'comm');
+}
+$('deptChatInput').addEventListener('keydown',e=>{if(e.key==='Enter')sendDeptMsg()});
+
+const WS={OPEN:'Waiting',SCHEDULED:'Waiting',APPROVED:'Approved',ACTIVE:'Active',COMPLETED:'Completed','NOT APPROVED':'Not Approved'};
+const WSCOL={OPEN:'yellow',SCHEDULED:'yellow',APPROVED:'green',ACTIVE:'green',COMPLETED:'green','NOT APPROVED':'red'};
+function renderAp(){
+  const st=$('apSt').value,s=$('apSec').value;
+  const L=R.filter(r=>(st==='all'||r.dv===st||r.ct===st)&&(s==='all'||r.s===+s));
+  $('apBody').innerHTML=L.length?L.map(r=>`<tr><td class="id-cell">${r.id}</td><td>${esc(r.w)}</td><td>${PB(r.pr)}</td><td>${esc(r.div||'\u2014')}</td><td>${esc(S[r.s].n)}</td><td>${B(r.dv)}</td><td>${B(r.ct)}</td></tr>`).join(''):emptyRow(7);
+}
+function renderWk(){
+  const st=$('wkSt').value,s=$('wkSec').value;
+  const L=R.filter(r=>(st==='all'||r.ac===st)&&(s==='all'||r.s===+s));
+  $('wkBody').innerHTML=L.length?L.map(r=>`<tr><td class="id-cell">${r.id}</td><td>${esc(r.wk)} &mdash; ${esc(r.rl)}</td><td>${esc(r.w)}</td><td>${PB(r.pr)}</td><td>${esc(S[r.s].n)}</td><td>${B(r.ac)}</td><td>${WS[r.st]?`<span class="badge badge-${WSCOL[r.st]}">${WS[r.st]}</span>`:'<span class="muted">\u2014</span>'}</td><td class="mono">${r.date}, ${r.stm}&ndash;${r.etm}</td><td class="mono">${r.stm}</td><td class="mono">${r.etm}</td></tr>`).join(''):emptyRow(10);
+}
+
+function renderComm(){
+  const q=$('wQ').value.trim().toLowerCase();
+  const L=R.filter(r=>hit([r.wk,r.rl,r.id],q));
+  $('wItems').innerHTML=L.length?L.map(r=>`<div class="worker-item ${r.id===cw?'active':''}" data-id="${r.id}"><div class="wav">${(r.wk||'?').split(/[ .]+/).filter(Boolean).map(x=>x[0]).join('')}<span class="stat-dot" style="background:var(--${r.online?'green':'text-faint'})"></span></div><div><div class="wname">${esc(r.wk)}</div><div class="wrole">${esc(r.rl)} &middot; ${r.id}</div></div></div>`).join(''):'<div class="empty">No workers found.</div>';
+  const r=R.find(x=>x.id===cw);
+  if(!r){$('chatName').textContent='';$('chatRole').textContent='';$('chatBody').innerHTML='<div class="empty">Select a worker.</div>';return}
+  $('chatName').textContent=r.wk;
+  $('chatRole').innerHTML=`${esc(r.rl)} &middot; Request ${r.id}`;
+  $('chatStatus').innerHTML=r.online?'<span class="badge badge-green">ACTIVE</span>':'<span class="badge badge-neutral">IDLE</span>';
+  const m=M[cw]||[];
+  $('chatBody').innerHTML=m.length?m.map(x=>`<div class="msg ${x.dir}">${esc(x.t)}<div class="t">${x.time}</div></div>`).join(''):'<div class="empty">No messages yet. Send the first one below.</div>';
+  $('chatBody').scrollTop=1e6;
+}
+$('wItems').addEventListener('click',e=>{const w=e.target.closest('.worker-item');if(w){cw=w.dataset.id;renderComm()}});
+function sendMsg(){
+  const i=$('chatInput'),v=i.value.trim();if(!v||!cw)return;
+  const r=R.find(x=>x.id===cw);if(!r)return;
+  postForm(urlFor('message',r.reqId),{body:v},'comm');
+}
+$('chatInput').addEventListener('keydown',e=>{if(e.key==='Enter')sendMsg()});
+
+[[['secSel'],renderDash],[['aiPri','aiSec','aiQ','aiAc'],renderAI],[['rqSt','rqSec','rqQ'],renderReq],[['apSt','apSec'],renderAp],[['wkSt','wkSec'],renderWk],[['wQ'],renderComm]]
+.forEach(([ids,f])=>ids.forEach(i=>$(i).addEventListener('input',f)));
+
+renderDash();renderAI();renderReq();renderAp();renderWk();renderComm();
+</script>
+<script>
+// Live railway clock - Indian Standard Time, 24-hour.
+(function(){function tick(){var n=new Date();
+document.getElementById('railTime').textContent=n.toLocaleTimeString('en-GB',{timeZone:'Asia/Kolkata',hourCycle:'h23'});
+document.getElementById('railDate').textContent=n.toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata',weekday:'short',day:'2-digit',month:'short',year:'numeric'});}
+tick();setInterval(tick,1000);})();
+</script>
+<script>
+// Keeps the statuses live. The server moves an asset to Active / Completed / Not Approved when its
+// start or end time comes; every 30 seconds this page asks if anything changed and refreshes itself
+// (never while you are typing or a pop-up is open).
+(function(){
+  var SIG = (typeof PAGE !== 'undefined') ? PAGE.sig : null, URL = "{% url 'lifecycle_status' %}";
+  if(!SIG) return;
+  function busy(){
+    var a = document.activeElement;
+    if(a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return true;
+    return Array.prototype.some.call(document.querySelectorAll('.modal-overlay,#naiModal'), function(m){ return getComputedStyle(m).display !== 'none'; });
+  }
+  setInterval(function(){
+    if(document.hidden || busy()) return;
+    fetch(URL, {credentials:'same-origin'}).then(function(r){ return r.json(); }).then(function(j){
+      if(j && j.sig && j.sig !== SIG){
+        var v = document.querySelector('.view.active');
+        if(v) history.replaceState(null, '', '#' + v.id.replace('view-', ''));
+        location.reload();
+      }
+    }).catch(function(){});
+  }, 30000);
+})();
+</script>
+{% include '_datepicker.html' %}
+{# Alert banners: approval alerts (masters 2:00, Control Office 2:15) and "train is coming" alerts (Control Office). #}
+<style>
+#apprAlerts{position:fixed;top:64px;right:14px;z-index:1000;display:flex;flex-direction:column;gap:10px;width:min(460px,calc(100% - 28px));max-height:calc(100vh - 80px);overflow-y:auto;pointer-events:none}
+.appr-card{pointer-events:auto;background:#2b1b0b;border:1px solid #f59e0b;border-left:6px solid #f59e0b;border-radius:10px;padding:12px 14px;color:#fde9c8;font:13px/1.5 'IBM Plex Sans',system-ui,sans-serif;box-shadow:0 10px 28px rgba(0,0,0,.5)}
+.appr-card.train{background:#2a0e10;border-color:#ef4444;border-left-color:#ef4444;color:#fde0e0}
+.appr-card b.t{display:block;font-size:13.5px;color:#fbbf24;margin-bottom:4px}
+.appr-card.train b.t{color:#f87171}
+.appr-card .tm{margin-top:6px;font:12px 'IBM Plex Mono',monospace;color:#fcd9a0}
+.appr-card.train .tm{color:#fbb}
+.appr-card .dt{margin-top:6px;font-size:12px;opacity:.85}
+.appr-card .ai{margin-top:6px;font-size:12px;color:#fbbf24}
+.appr-card .acts{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.appr-card button{cursor:pointer;border-radius:8px;padding:8px 14px;font-weight:700;font-size:12.5px;border:1px solid #f59e0b;background:transparent;color:#fde9c8}
+.appr-card button.go{background:#f59e0b;color:#2b1b0b}
+.appr-card.train button.go{background:#ef4444;border-color:#ef4444;color:#fff}
+.appr-card .er{display:none;margin-top:8px;color:#fca5a5;font-size:12px}
+#apprModalBg{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1100;display:none;align-items:center;justify-content:center;padding:16px}
+#apprModal{background:#10151d;color:#e6edf3;border:1px solid #2b3544;border-radius:12px;padding:20px;width:100%;max-width:440px;max-height:92vh;overflow-y:auto;font:13px/1.5 'IBM Plex Sans',system-ui,sans-serif}
+#apprModal h3{margin:0 0 4px;font-size:15px}
+#apprModal textarea{width:100%;min-height:70px;border-radius:8px;border:1px solid #2b3544;background:#0b0f15;color:#e6edf3;padding:8px;font:inherit;margin:6px 0 10px;box-sizing:border-box}
+#apprModal .slot{margin:0 6px 6px 0;cursor:pointer;border-radius:8px;border:1px solid #2b3544;background:#161d29;color:#e6edf3;padding:6px 10px;font-size:12px}
+#apprModal .slot.on{background:#f59e0b;color:#2b1b0b;border-color:#f59e0b}
+#apprModal .grp{margin:8px 0 4px;color:#9fb0c3;font-size:12px}
+#apprModal .row{display:flex;gap:8px;margin-top:12px}
+#apprModal button.b{cursor:pointer;border-radius:8px;padding:9px 14px;font-weight:700;border:1px solid #f59e0b;background:transparent;color:#e6edf3}
+#apprModal button.b.go{background:#f59e0b;color:#2b1b0b}
+#apprModal .er{color:#fca5a5;font-size:12px;margin-top:8px;display:none}
+</style>
+<div id="apprAlerts"></div>
+<div id="apprModalBg"><div id="apprModal">
+  <h3 id="amTitle">Not Approved</h3>
+  <div id="amInfo" style="color:#9fb0c3;font-size:12px"></div>
+  <label style="display:block;margin-top:10px">Message to the worker (why the time is changed)</label>
+  <textarea id="amReason" placeholder="Write the reason / message..."></textarea>
+  <button type="button" class="b" id="amSlotsBtn" style="width:100%">Reschedule time - show available times</button>
+  <div id="amSlots" style="margin-top:8px"></div>
+  <div class="er" id="amErr"></div>
+  <div class="row"><button type="button" class="b go" id="amSend">Send to worker &amp; change time</button><button type="button" class="b" id="amCancel">Cancel</button></div>
+</div></div>
+<script>
+(function(){
+  var ROLE = "DIVISION";
+  var URL_ALERTS = "{% url 'approval_alerts' %}";
+  var URL_APPROVE = "{% url 'approve_request' 0 %}", URL_REJECT = "{% url 'reject_request' 0 %}",
+      URL_CTRL = "{% url 'control_approve_request' 0 %}", URL_SLOTS = "{% url 'request_slots' 0 %}",
+      URL_RESCHED = "{% url 'reschedule_request' 0 %}", URL_BLOCK = "{% url 'block_train' 0 'TRAIN' %}",
+      URL_EXTEND = "{% url 'control_extend' 0 %}";
+  var TOKEN = "{{ csrf_token }}";
+  var box = document.getElementById('apprAlerts');
+  function url(u, id){ return u.replace('/0/', '/' + id + '/'); }
+  function send(u, extra){
+    var fd = new FormData(); fd.append('csrfmiddlewaretoken', TOKEN); fd.append('ajax', '1');
+    Object.keys(extra || {}).forEach(function(k){ fd.append(k, extra[k]); });
+    return fetch(u, {method:'POST', body:fd, credentials:'same-origin'});
+  }
+  function asJson(r){ return r.json().then(function(j){ return {ok:r.ok, j:j}; }); }
+  function el(tag, cls, txt){ var e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; }
+
+  /* ---- Not Approved + new time (Control Office) ---- */
+  var bg = document.getElementById('apprModalBg'), cur = null, picked = null;
+  function amErr(t){ var e = document.getElementById('amErr'); e.textContent = t || ''; e.style.display = t ? 'block' : 'none'; }
+  function openModal(a){
+    cur = a; picked = null; amErr('');
+    document.getElementById('amInfo').textContent = a.code + ' \u2022 ' + a.date + ' ' + a.start + '\u2013' + a.end + ' \u2022 ' + a.details;
+    document.getElementById('amReason').value = ''; document.getElementById('amSlots').innerHTML = '';
+    bg.style.display = 'flex';
+  }
+  document.getElementById('amCancel').onclick = function(){ bg.style.display = 'none'; };
+  document.getElementById('amSlotsBtn').onclick = function(){
+    if (!cur) return; var sl = document.getElementById('amSlots'); amErr(''); sl.textContent = 'Checking live trains...';
+    fetch(url(URL_SLOTS, cur.reqId), {credentials:'same-origin'}).then(function(r){ return r.json(); }).then(function(j){
+      sl.innerHTML = '';
+      if (!j.ok){ sl.textContent = j.error || 'Could not load times.'; return; }
+      sl.appendChild(el('div', 'grp', 'Free ' + j.duration + ' windows (buffer 15 min before and after is checked):'));
+      var groups = j.groups && j.groups.length ? j.groups : [{label:'', slots:j.slots || []}];
+      groups.forEach(function(g){
+        if (g.label) sl.appendChild(el('div', 'grp', g.label));
+        if (!g.slots.length) sl.appendChild(el('div', 'grp', g.note || 'No free time.'));
+        g.slots.forEach(function(x){
+          var b = el('button', 'slot', x.start + '\u2013' + x.end); b.type = 'button'; b.title = x.checked || '';
+          b.onclick = function(){ picked = x; sl.querySelectorAll('.slot').forEach(function(y){ y.classList.remove('on'); }); b.classList.add('on'); amErr(''); };
+          sl.appendChild(b);
+        });
+      });
+      if (j.note) sl.appendChild(el('div', 'grp', j.note));
+    }).catch(function(){ sl.textContent = 'Network error - try again.'; });
+  };
+  document.getElementById('amSend').onclick = function(){
+    var why = document.getElementById('amReason').value.trim();
+    if (!why){ amErr('Please write the message for the worker.'); return; }
+    if (!picked){ amErr('Press "Reschedule time" and choose a new time.'); return; }
+    var btn = document.getElementById('amSend'); btn.disabled = true;
+    send(url(URL_RESCHED, cur.reqId), {alert:'1', reason: why, start: picked.start_iso, end: picked.end_iso})
+      .then(asJson).then(function(x){ if (x.ok && x.j.ok) location.reload(); else { btn.disabled = false; amErr(x.j.error || 'Could not change the time.'); } })
+      .catch(function(){ btn.disabled = false; amErr('Network error - try again.'); });
+  };
+
+  /* ---- cards ---- */
+  function approvalCard(a){
+    var d = el('div', 'appr-card');
+    d.appendChild(el('b', 't', '\u26A0 ' + (ROLE === 'CTRL' ? 'Masters have not decided' : 'Approval pending') + ' \u2014 ' + a.code + (a.minutesLeft ? ' (starts in ' + a.minutesLeft + ' min)' : '')));
+    d.appendChild(el('div', '', a.text));
+    d.appendChild(el('div', 'tm', 'Masters ' + a.alertAt + ' \u2022 Control ' + a.ctrlAt + ' \u2022 AI check ' + a.autoAt + ' \u2022 buffer ' + a.bufferStart + ' \u2022 work ' + a.start + '\u2013' + a.end + ' \u2022 buffer ends ' + a.bufferEnd));
+    d.appendChild(el('div', 'dt', a.details));
+    if (a.trainClash) d.appendChild(el('div', 'ai', a.trainClash));
+    else if (!a.autoDue) d.appendChild(el('div', 'ai', 'If nobody decides, the AI checks the trains at ' + a.autoAt + ' and approves it when the line is clear.'));
+    var er = el('div', 'er'), acts = el('div', 'acts');
+    function fail(m){ er.textContent = m; er.style.display = 'block'; }
+    if (ROLE === 'CTRL'){
+      var go = el('button', 'go', 'Approve (Control Office)');
+      go.onclick = function(){ go.disabled = true;
+        send(url(URL_CTRL, a.reqId)).then(asJson).then(function(x){ if (x.ok && x.j.ok) location.reload(); else { go.disabled = false; fail(x.j.error || 'Could not approve.'); } })
+          .catch(function(){ go.disabled = false; fail('Network error - try again.'); }); };
+      var no = el('button', '', 'Not Approved'); no.onclick = function(){ openModal(a); };
+      acts.appendChild(go); acts.appendChild(no);
+    } else {
+      var ap = el('button', 'go', 'Approve');
+      ap.onclick = function(){ ap.disabled = true; send(url(URL_APPROVE, a.reqId), {worker_id:''}).then(function(){ location.reload(); }).catch(function(){ ap.disabled = false; fail('Network error - try again.'); }); };
+      var nd = el('button', '', 'Not Approved');
+      nd.onclick = function(){
+        var why = prompt('Reason this is not approved:'); if (why === null) return;
+        if (!why.trim()){ fail('Please write a reason.'); return; }
+        send(url(URL_REJECT, a.reqId), {reason: why.trim()}).then(function(){ location.reload(); }).catch(function(){ fail('Network error - try again.'); });
+      };
+      acts.appendChild(ap); acts.appendChild(nd);
+    }
+    d.appendChild(acts); d.appendChild(er);
+    return d;
+  }
+  function trainCard(a){
+    var d = el('div', 'appr-card train');
+    d.appendChild(el('b', 't', '\uD83D\uDEA8 Train ' + a.trainNumber + ' is coming \u2014 worker ' + (a.working ? 'is working' : 'is booked') + ' there'));
+    d.appendChild(el('div', '', a.text));
+    d.appendChild(el('div', 'tm', 'Train ' + a.trainNumber + ' ' + a.trainName + ' ' + a.enter + '\u2013' + a.leave + ' \u2022 work ' + a.start + '\u2013' + a.end + ' \u2022 buffer ' + a.bufferStart + '\u2013' + a.bufferEnd));
+    d.appendChild(el('div', 'dt', a.details));
+    var er = el('div', 'er'), acts = el('div', 'acts');
+    var blk = el('button', 'go', 'Block train ' + a.trainNumber);
+    blk.onclick = function(){ blk.disabled = true;
+      send(url(URL_BLOCK, a.reqId).replace('/TRAIN/', '/' + encodeURIComponent(a.trainNumber) + '/')).then(asJson)
+        .then(function(x){ if (x.ok && x.j.ok) location.reload(); else { blk.disabled = false; er.textContent = x.j.error || 'Could not block the train.'; er.style.display = 'block'; } })
+        .catch(function(){ blk.disabled = false; er.textContent = 'Network error - try again.'; er.style.display = 'block'; }); };
+    acts.appendChild(blk); d.appendChild(acts); d.appendChild(er);
+    return d;
+  }
+  function extensionCard(a){
+    var d = el('div', 'appr-card');
+    d.appendChild(el('b', 't', '\u23F1 More time asked \u2014 ' + a.code + ' is not complete'));
+    d.appendChild(el('div', '', a.text));
+    d.appendChild(el('div', 'tm', 'Worker ' + a.worker + ' \u2022 planned end ' + a.end + ' \u2022 new end ' + a.newEnd + ' (' + a.minutes + ' min added from now)'));
+    d.appendChild(el('div', 'dt', a.details));
+    if (a.trains && a.trains.length) d.appendChild(el('div', 'ai', 'Will be blocked: ' + a.trains.join('; ')));
+    var er = el('div', 'er'), acts = el('div', 'acts');
+    var ok = el('button', 'go', 'OK \u2014 approve & block that area');
+    ok.onclick = function(){ ok.disabled = true;
+      send(url(URL_EXTEND, a.reqId)).then(asJson)
+        .then(function(x){ if (x.ok && x.j.ok) location.reload(); else { ok.disabled = false; er.textContent = x.j.error || 'Could not approve.'; er.style.display = 'block'; } })
+        .catch(function(){ ok.disabled = false; er.textContent = 'Network error - try again.'; er.style.display = 'block'; }); };
+    acts.appendChild(ok); d.appendChild(acts); d.appendChild(er);
+    return d;
+  }
+  function render(list){
+    box.innerHTML = '';
+    list.forEach(function(a){ box.appendChild(a.kind === 'train' ? trainCard(a) : a.kind === 'extension' ? extensionCard(a) : approvalCard(a)); });
+  }
+  function poll(){
+    fetch(URL_ALERTS, {credentials:'same-origin'}).then(function(r){ return r.json(); })
+      .then(function(j){ render(j.alerts || []); }).catch(function(){});
+  }
+  poll(); setInterval(poll, 30000);
+})();
+</script>
+</body>
+</html>

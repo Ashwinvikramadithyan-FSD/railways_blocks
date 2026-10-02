@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register | Railway Management System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:ital,wght@1,600;1,700;1,800&family=Nunito:ital,wght@1,600;1,700;1,800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Nunito', 'Noto Sans Devanagari', sans-serif; font-style: italic; }
+        body { min-height: 100vh; display: flex; justify-content: center; align-items: center; background: linear-gradient(135deg, #090a0f 0%, #161824 100%); padding: 40px 20px; color: #f8fafc; }
+        .clay-card { width: 100%; max-width: 480px; background: #181926; border-radius: 36px; padding: 42px 34px; border: 2px solid rgba(255, 255, 255, 0.08); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), inset 0 -10px 14px rgba(0, 0, 0, 0.7), inset 0 10px 14px rgba(255, 255, 255, 0.08); }
+        .clay-header { text-align: center; margin-bottom: 24px; }
+        .clay-header h2 { font-size: 24px; font-weight: 800; color: #f8fafc; }
+        .clay-header p { font-size: 14px; font-weight: 700; color: #a78bfa; margin-top: 4px; }
+        .alert-error { background-color: #2a1215; border: 1px solid #7f1d1d; color: #f87171; padding: 12px; border-radius: 18px; font-size: 13px; font-weight: 700; margin-bottom: 12px; text-align: center; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 13px; font-weight: 800; margin-bottom: 6px; color: #818cf8; }
+        .form-group label .hindi-word { color: #c084fc; margin-left: 4px; }
+        .form-group input, .form-group select { width: 100%; height: 48px; padding: 0 18px; background-color: #0f1019; border: 2px solid transparent; border-radius: 20px; color: #f1f5f9; font-size: 14px; font-weight: 700; outline: none; transition: all 0.25s ease; }
+        .form-group input:focus, .form-group select:focus { background-color: #131422; border-color: #6366f1; }
+
+        .password-wrapper { position: relative; }
+        .password-wrapper input { padding-right: 48px; }
+        .toggle-eye { position: absolute; top: 50%; right: 16px; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; color: #818cf8; }
+        .toggle-eye svg { width: 20px; height: 20px; pointer-events: none; }
+        .toggle-eye .eye-off { display: none; }
+        .toggle-eye.is-visible .eye { display: none; }
+        .toggle-eye.is-visible .eye-off { display: block; }
+
+        .field-error { color: #f87171; font-size: 12px; font-weight: 700; margin-top: 6px; padding-left: 6px; }
+        .form-group.has-error input, .form-group.has-error select { border-color: #7f1d1d; }
+        .hint { color: #64748b; font-size: 11.5px; font-weight: 700; margin-top: 5px; padding-left: 6px; }
+        #workerDeptGroup { display: none; }
+
+        .btn-group { display: flex; flex-direction: column; gap: 12px; margin-top: 14px; }
+        .btn-submit { width: 100%; height: 50px; background: #6366f1; border: none; border-radius: 22px; color: #ffffff; font-size: 15px; font-weight: 800; cursor: pointer; }
+        .btn-login { width: 100%; height: 50px; display: flex; justify-content: center; align-items: center; background: #272a3c; border-radius: 22px; color: #a78bfa; font-size: 14px; font-weight: 800; text-decoration: none; }
+    </style>
+</head>
+<body>
+
+    <div class="clay-card">
+        <div class="clay-header">
+            <h2>Register / <span style="color: #c084fc;">(पंजीकरण करें)</span></h2>
+            <p>Railway Management Portal</p>
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert-error">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="POST" action="{% url 'register' %}" id="regForm" novalidate>
+            {% csrf_token %}
+            <div class="form-group {% if form.username.errors %}has-error{% endif %}" data-field="username">
+                <label for="username">Username / <span class="hindi-word">(उपयोगकर्ता का नाम)</span></label>
+                <input type="text" id="username" name="username" placeholder="Choose a username (max 200 characters)" value="{{ request.POST.username|default:'' }}" maxlength="200" data-max="200">
+                <div class="field-error" id="err_username">{% if form.username.errors %}{{ form.username.errors.0 }}{% endif %}</div>
+            </div>
+            <div class="form-group {% if form.department.errors %}has-error{% endif %}" data-field="department">
+                <label for="department">Character / <span class="hindi-word">(भूमिका)</span></label>
+                <select id="department" name="department"><option value="" disabled {% if not request.POST.department %}selected{% endif %}>Select Character</option><option value="STATION" {% if request.POST.department == "STATION" %}selected{% endif %}>Station Master</option><option value="DIVISION" {% if request.POST.department == "DIVISION" %}selected{% endif %}>Division Master</option><option value="CTRL" {% if request.POST.department == "CTRL" %}selected{% endif %}>Control Office</option><option value="WORKER" {% if request.POST.department == "WORKER" %}selected{% endif %}>Worker Dashboard</option></select>
+                <div class="field-error" id="err_department">{% if form.department.errors %}{{ form.department.errors.0 }}{% endif %}</div>
+            </div>
+            <div id="workerDeptGroup" class="form-group {% if form.work_department.errors %}has-error{% endif %}" data-field="work_department">
+                <label for="work_department">Department / <span class="hindi-word">(विभाग)</span></label>
+                <select id="work_department" name="work_department"><option value="" disabled {% if not request.POST.work_department %}selected{% endif %}>Select Department</option><option value="SMMS" {% if request.POST.work_department == "SMMS" %}selected{% endif %}>SMMS</option><option value="TMS" {% if request.POST.work_department == "TMS" %}selected{% endif %}>TMS</option><option value="TDMS" {% if request.POST.work_department == "TDMS" %}selected{% endif %}>TDMS</option></select>
+                <div class="field-error" id="err_work_department">{% if form.work_department.errors %}{{ form.work_department.errors.0 }}{% endif %}</div>
+            </div>
+            <div class="form-group {% if form.password.errors %}has-error{% endif %}" data-field="password">
+                <label for="password">Password / <span class="hindi-word">(पासवर्ड)</span></label>
+                <div class="password-wrapper">
+                    <input type="password" id="password" name="password" placeholder="Create a unique password">
+                    <button type="button" class="toggle-eye" data-target="password" aria-label="Show password">
+                        <svg class="eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+                        <svg class="eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-7 0-11-7-11-7a18.5 18.5 0 0 1 5.06-5.94M9.9 4.24A10.94 10.94 0 0 1 12 4c7 0 11 7 11 7a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                    </button>
+                </div>
+                <div class="hint">Must be different from every other account's password.</div>
+                <div class="field-error" id="err_password">{% if form.password.errors %}{{ form.password.errors.0 }}{% endif %}</div>
+            </div>
+            <div class="form-group {% if form.phone_number.errors %}has-error{% endif %}" data-field="phone_number">
+                <label for="phone_number">Phone Number / <span class="hindi-word">(फ़ोन नंबर)</span></label>
+                <input type="text" id="phone_number" name="phone_number" placeholder="10-digit mobile number" value="{{ request.POST.phone_number|default:'' }}" maxlength="10" inputmode="numeric" autocomplete="tel">
+                <div class="hint">Exactly 10 digits, numbers only.</div>
+                <div class="field-error" id="err_phone_number">{% if form.phone_number.errors %}{{ form.phone_number.errors.0 }}{% endif %}</div>
+            </div>
+            <div class="form-group {% if form.email.errors %}has-error{% endif %}" data-field="email">
+                <label for="email">Email ID / <span class="hindi-word">(ईमेल)</span></label>
+                <input type="text" id="email" name="email" placeholder="yourname@gmail.com" value="{{ request.POST.email|default:'' }}" autocomplete="email">
+                <div class="hint">Must be a Gmail address (@gmail.com) you currently use.</div>
+                <div class="field-error" id="err_email">{% if form.email.errors %}{{ form.email.errors.0 }}{% endif %}</div>
+            </div>
+            <div class="form-group {% if form.division.errors %}has-error{% endif %}" data-field="division">
+                <label for="division">Division / <span class="hindi-word">(मंडल)</span></label>
+                <input type="text" id="division" name="division" placeholder="Your division (max 200 characters)" value="{{ request.POST.division|default:'' }}" maxlength="200" data-max="200">
+                <div class="field-error" id="err_division">{% if form.division.errors %}{{ form.division.errors.0 }}{% endif %}</div>
+            </div>
+            <div class="form-group {% if form.section.errors %}has-error{% endif %}" data-field="section">
+                <label for="section">Section / <span class="hindi-word">(खंड)</span></label>
+                <input type="text" id="section" name="section" placeholder="Your section (max 200 characters)" value="{{ request.POST.section|default:'' }}" maxlength="200" data-max="200">
+                <div class="field-error" id="err_section">{% if form.section.errors %}{{ form.section.errors.0 }}{% endif %}</div>
+            </div>
+            <div class="form-group {% if form.station.errors %}has-error{% endif %}" data-field="station">
+                <label for="station">Station / <span class="hindi-word">(स्टेशन)</span></label>
+                <input type="text" id="station" name="station" placeholder="Your station (max 200 characters)" value="{{ request.POST.station|default:'' }}" maxlength="200" data-max="200">
+                <div class="field-error" id="err_station">{% if form.station.errors %}{{ form.station.errors.0 }}{% endif %}</div>
+            </div>
+
+            <div class="btn-group">
+                <button type="submit" class="btn-submit">Register / (पंजीकरण करें)</button>
+                <a href="{% url 'login' %}" class="btn-login">Already Registered? Sign In / (साइन इन करें)</a>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        document.querySelectorAll('.toggle-eye').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var input = document.getElementById(btn.dataset.target);
+                var showing = input.type === 'text';
+                input.type = showing ? 'password' : 'text';
+                btn.classList.toggle('is-visible', !showing);
+                btn.setAttribute('aria-label', showing ? 'Show password' : 'Hide password');
+            });
+        });
+
+        var $ = function (id) { return document.getElementById(id); };
+        var GMAIL = /^(?!\.)(?!.*\.\.)[a-z0-9.]{6,30}(?<!\.)@gmail\.com$/;
+
+        function setError(name, msg) {
+            $('err_' + name).textContent = msg || '';
+            document.querySelector('[data-field="' + name + '"]').classList.toggle('has-error', !!msg);
+            return !msg;
+        }
+        function limited(label) {
+            return function (v) {
+                v = v.trim();
+                return !v ? label + ' is required.' : v.length > 200 ? label + ' cannot be more than 200 characters.' : '';
+            };
+        }
+        var rules = {
+            username: limited('Username'),
+            department: function (v) { return v ? '' : 'Please select a character.'; },
+            work_department: function (v) { return ($('department').value !== 'WORKER' || v) ? '' : 'Please select a department (SMMS, TMS or TDMS).'; },
+            password: function (v) { return v ? '' : 'Password is required.'; },
+            phone_number: function (v) {
+                v = v.trim();
+                if (!v) return 'Phone number is required.';
+                if (!/^[0-9]+$/.test(v)) return 'Phone number must contain digits only (0-9), no letters or symbols.';
+                if (v.length !== 10) return 'Phone number must be exactly 10 digits (you entered ' + v.length + ').';
+                return '';
+            },
+            email: function (v) {
+                v = v.trim().toLowerCase();
+                if (!v) return 'Email ID is required.';
+                if (!v.endsWith('@gmail.com')) return 'Only a Gmail address ending with @gmail.com is allowed.';
+                if (!GMAIL.test(v)) return 'Enter a valid Gmail address (6-30 letters, numbers or dots before @gmail.com).';
+                return '';
+            },
+            division: limited('Division'),
+            section: limited('Section'),
+            station: limited('Station')
+        };
+        function validate(name) { return setError(name, rules[name]($(name).value)); }
+
+        Object.keys(rules).forEach(function (name) {
+            var el = $(name);
+            el.addEventListener('blur', function () { validate(name); });
+            el.addEventListener('change', function () { validate(name); });
+            el.addEventListener('input', function () {
+                if (el.dataset.max && el.value.length >= +el.dataset.max) {
+                    setError(name, 'Maximum ' + el.dataset.max + ' characters allowed - you cannot type more.');
+                } else if ($('err_' + name).textContent) {
+                    validate(name);
+                }
+            });
+        });
+
+        // Worker Dashboard -> reveal the SMMS / TMS / TDMS department field.
+        function syncDepartment() {
+            var isWorker = $('department').value === 'WORKER';
+            $('workerDeptGroup').style.display = isWorker ? 'block' : 'none';
+            if (!isWorker) { $('work_department').value = ''; setError('work_department', ''); }
+        }
+        $('department').addEventListener('change', syncDepartment);
+        syncDepartment();
+
+        $('regForm').addEventListener('submit', function (e) {
+            var ok = true;
+            Object.keys(rules).forEach(function (name) { if (!validate(name)) ok = false; });
+            if (!ok) {
+                e.preventDefault();
+                var bad = document.querySelector('.form-group.has-error');
+                if (bad) bad.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        });
+    </script>
+</body>
+</html>

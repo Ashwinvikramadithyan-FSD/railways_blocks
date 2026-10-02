@@ -1,0 +1,70 @@
+{# Approval alert banner: 30 minutes before the buffer starts, an asset that is still not approved / not approved shows here. #}
+<style>
+#apprAlerts{position:fixed;top:64px;right:14px;z-index:1000;display:flex;flex-direction:column;gap:10px;width:min(440px,calc(100% - 28px));pointer-events:none}
+.appr-card{pointer-events:auto;background:#2b1b0b;border:1px solid #f59e0b;border-left:6px solid #f59e0b;border-radius:10px;padding:12px 14px;color:#fde9c8;font:13px/1.5 'IBM Plex Sans',system-ui,sans-serif;box-shadow:0 10px 28px rgba(0,0,0,.5)}
+.appr-card b.t{display:block;font-size:13.5px;color:#fbbf24;margin-bottom:4px}
+.appr-card .tm{margin-top:6px;font:12px 'IBM Plex Mono',monospace;color:#fcd9a0}
+.appr-card .acts{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.appr-card button{cursor:pointer;border-radius:8px;padding:8px 14px;font-weight:700;font-size:12.5px;border:1px solid #f59e0b;background:transparent;color:#fde9c8}
+.appr-card button.go{background:#f59e0b;color:#2b1b0b}
+.appr-card .er{display:none;margin-top:8px;color:#fca5a5;font-size:12px}
+</style>
+<div id="apprAlerts"></div>
+<script>
+(function(){
+  var ROLE = "{{ role }}";
+  var URL_ALERTS = "{% url 'approval_alerts' %}";
+  var URL_APPROVE = "{% url 'approve_request' 0 %}", URL_REJECT = "{% url 'reject_request' 0 %}",
+      URL_CTRL = "{% url 'control_approve_request' 0 %}";
+  var TOKEN = "{{ csrf_token }}";
+  var box = document.getElementById('apprAlerts');
+  function url(u, id){ return u.replace('/0/', '/' + id + '/'); }
+  function send(u, extra){
+    var fd = new FormData(); fd.append('csrfmiddlewaretoken', TOKEN); fd.append('ajax', '1');
+    Object.keys(extra || {}).forEach(function(k){ fd.append(k, extra[k]); });
+    return fetch(u, {method:'POST', body:fd, credentials:'same-origin'});
+  }
+  function card(a){
+    var d = document.createElement('div'); d.className = 'appr-card';
+    var t = document.createElement('b'); t.className = 't';
+    t.textContent = '\u26A0 Approval pending \u2014 ' + a.code + (a.minutesLeft ? ' (starts in ' + a.minutesLeft + ' min)' : '');
+    var p = document.createElement('div'); p.textContent = a.text;
+    var tm = document.createElement('div'); tm.className = 'tm';
+    tm.textContent = 'Alert ' + a.alertAt + ' \u2022 buffer ' + a.bufferStart + ' \u2022 work ' + a.start + '\u2013' + a.end + ' \u2022 buffer ends ' + a.bufferEnd;
+    var er = document.createElement('div'); er.className = 'er';
+    var acts = document.createElement('div'); acts.className = 'acts';
+    function fail(msg){ er.textContent = msg; er.style.display = 'block'; }
+    if (ROLE === 'CTRL'){
+      var go = document.createElement('button'); go.className = 'go'; go.textContent = 'Approve (Control Office)';
+      go.onclick = function(){
+        go.disabled = true;
+        send(url(URL_CTRL, a.reqId)).then(function(r){ return r.json().then(function(j){ return {ok:r.ok, j:j}; }); })
+          .then(function(x){ if (x.ok && x.j.ok) location.reload(); else { go.disabled = false; fail(x.j.error || 'Could not approve.'); } })
+          .catch(function(){ go.disabled = false; fail('Network error - try again.'); });
+      };
+      acts.appendChild(go);
+    } else {
+      var ap = document.createElement('button'); ap.className = 'go'; ap.textContent = 'Approve';
+      ap.onclick = function(){ ap.disabled = true; send(url(URL_APPROVE, a.reqId), {worker_id:''}).then(function(){ location.reload(); }).catch(function(){ ap.disabled = false; fail('Network error - try again.'); }); };
+      var no = document.createElement('button'); no.textContent = 'Not Approved';
+      no.onclick = function(){
+        var why = prompt('Reason this is not approved:'); if (why === null) return;
+        if (!why.trim()){ fail('Please write a reason.'); return; }
+        send(url(URL_REJECT, a.reqId), {reason: why.trim()}).then(function(){ location.reload(); }).catch(function(){ fail('Network error - try again.'); });
+      };
+      acts.appendChild(ap); acts.appendChild(no);
+    }
+    d.appendChild(t); d.appendChild(p); d.appendChild(tm); d.appendChild(acts); d.appendChild(er);
+    return d;
+  }
+  function render(list){
+    box.innerHTML = '';
+    list.forEach(function(a){ box.appendChild(card(a)); });
+  }
+  function poll(){
+    fetch(URL_ALERTS, {credentials:'same-origin'}).then(function(r){ return r.json(); })
+      .then(function(j){ render(j.alerts || []); }).catch(function(){});
+  }
+  poll(); setInterval(poll, 30000);
+})();
+</script>

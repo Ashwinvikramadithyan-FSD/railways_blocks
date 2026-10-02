@@ -1,0 +1,38 @@
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/themes/dark.css">
+<style>
+  .flatpickr-calendar { z-index: 99999 !important; font-family: inherit; }
+  input.flatpickr-input[readonly] { cursor: pointer; }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js"></script>
+<script>
+(function () {
+  var CONFIG = {
+    'date':           { dateFormat: 'Y-m-d' },
+    'time':           { enableTime: true, noCalendar: true, dateFormat: 'H:i', time_24hr: true, minuteIncrement: 1 },
+    'datetime-local': { enableTime: true, dateFormat: 'Y-m-d\\TH:i', time_24hr: true, minuteIncrement: 1 }
+  };
+  function enhance(input) {
+    if (input.dataset.pickerReady) return;
+    var type = input.getAttribute('type');
+    if (!CONFIG[type]) return;
+    input.dataset.pickerReady = '1';
+    if (window.flatpickr) {
+      var opts = Object.assign({ allowInput: false, disableMobile: true, clickOpens: true }, CONFIG[type]);
+      window.flatpickr(input, opts);
+    } else if (input.showPicker) {
+      // Library could not load (offline): fall back to the browser's own picker.
+      input.addEventListener('click', function () { try { input.showPicker(); } catch (e) {} });
+    }
+  }
+  function scan(root) {
+    (root.querySelectorAll ? root : document)
+      .querySelectorAll('input[type="date"], input[type="time"], input[type="datetime-local"]')
+      .forEach(enhance);
+  }
+  scan(document);
+  new MutationObserver(function (muts) {
+    muts.forEach(function (m) { m.addedNodes.forEach(function (n) { if (n.nodeType === 1) { if (n.matches && n.matches('input')) enhance(n); scan(n); } }); });
+  }).observe(document.body, { childList: true, subtree: true });
+})();
+</script>

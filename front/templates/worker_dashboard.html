@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Worker Dashboard</title>
+<style>
+:root{
+  --bg:#0c0d0f; --panel:#17181b; --panel2:#1e2023; --line:#2a2c30;
+  --text:#f5f5f6; --muted:#9a9da3; --green:#22c55e; --red:#ef4444; --yellow:#eab308;
+  --green-bg:rgba(34,197,94,.15); --red-bg:rgba(239,68,68,.15); --yellow-bg:rgba(234,179,8,.15);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidden;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);}
+button{font-family:inherit;cursor:pointer}
+.app{display:flex;flex:1 1 auto;min-height:0}
+.sidebar{width:220px;flex:0 0 220px;background:#0a0b0c;border-right:1px solid var(--line);
+  padding:18px 12px;overflow-y:auto;display:none;flex-direction:column}
+.scrim{display:none}
+.menu-btn{display:none;background:none;border:1px solid var(--line);color:var(--text);
+  width:38px;height:38px;border-radius:8px;font-size:18px;cursor:pointer;flex-shrink:0;
+  align-items:center;justify-content:center}
+.brand{display:flex;align-items:center;gap:10px;padding:4px 8px 16px;border-bottom:1px solid var(--line);margin-bottom:10px}
+.brand .dot{width:10px;height:10px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green)}
+.brand-text b{display:block;font-size:14px}
+.brand-text span{display:block;font-size:11px;color:var(--muted)}
+.nav-item{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:8px;color:var(--muted);
+  font-size:13.5px;cursor:pointer;margin-bottom:2px}
+.nav-item svg{width:17px;height:17px;flex:0 0 17px}
+.nav-item:hover{background:var(--panel2);color:var(--text)}
+.nav-item.active{background:var(--panel2);color:var(--text)}
+.sidebar-nav{flex:1}
+.sidebar-foot{padding-top:14px;border-top:1px solid var(--line);margin-top:10px}
+.logout-link{display:block;color:var(--red);font-size:12px;text-decoration:none;border:1px solid var(--line);padding:8px 10px;border-radius:8px;text-align:center}
+.logout-link:hover{background:var(--red-bg)}
+.main{flex:1;min-width:0;padding:16px 16px 24px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.topbar{
+  position:-webkit-sticky;position:sticky;top:0;top:env(safe-area-inset-top,0px);z-index:20;
+  background:var(--bg);margin:0 -16px 14px;padding:12px 16px;
+  display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--line);
+}
+.topbar h1{font-size:19px;margin:0}
+.topbar .sub{color:var(--muted);font-size:12.5px;margin-top:2px}
+.cards{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:18px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
+.card .n{font-size:22px;font-weight:700}
+.card .l{font-size:11px;color:var(--muted);margin-top:2px}
+.card.g .n{color:var(--green)} .card.r .n{color:var(--red)} .card.y .n{color:var(--yellow)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:16px}
+.panel h2{font-size:15px;margin:0 0 12px}
+.section{display:none}
+.section.active{display:block}
+.work-card{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px;position:relative}
+.work-card .row{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px}
+.row-right{display:flex;align-items:center;gap:8px}
+.work-card .wid{font-weight:700;font-size:13.5px;font-variant-numeric:tabular-nums}
+.work-card .title{font-size:14.5px;font-weight:600;margin-bottom:6px}
+.meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;font-size:12.5px;color:var(--muted);margin-bottom:8px}
+.meta-grid b{color:var(--text);font-weight:500;display:block}
+.badge{display:inline-block;padding:4px 10px;border-radius:20px;font-size:11.5px;font-weight:600;white-space:nowrap}
+.badge.green{background:var(--green-bg);color:var(--green)}
+.badge.red{background:var(--red-bg);color:var(--red)}
+.badge.yellow{background:var(--yellow-bg);color:var(--yellow)}
+.badge.grey{background:#2a2c30;color:var(--muted)}
+.card-x{width:26px;height:26px;flex:0 0 26px;border-radius:50%;background:var(--panel);border:1px solid var(--line);
+  color:var(--muted);display:flex;align-items:center;justify-content:center;font-size:16px;line-height:1}
+.card-x:hover{background:var(--red-bg);color:var(--red);border-color:var(--red)}
+.actions{display:flex;gap:10px;margin-top:10px}
+.btn{border-radius:10px;padding:13px 14px;font-size:14px;font-weight:600;border:1px solid var(--line);
+  background:var(--panel);color:var(--text);flex:1;min-height:46px}
+.btn.accept{background:var(--green-bg);border-color:var(--green);color:var(--green)}
+.btn.reject{background:var(--red-bg);border-color:var(--red);color:var(--red)}
+.btn.primary{background:#fff;color:#0c0d0f;border-color:#fff}
+.btn.full{width:100%}
+.given-time{font-size:12px;color:var(--muted);margin-top:6px}
+.flow{display:flex;flex-direction:column;align-items:flex-start;gap:0;margin:6px 0 10px}
+.flow-step{display:flex;align-items:center;gap:10px;padding:6px 0}
+.flow-arrow{color:var(--muted);font-size:14px;padding-left:13px;line-height:1}
+.flow-label{font-size:13px;min-width:118px}
+.sched-compare{display:flex;gap:10px;margin:8px 0}
+.sched-box{flex:1;background:#151619;border:1px solid var(--line);border-radius:10px;padding:10px}
+.sched-box .k{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;margin-bottom:4px}
+.sched-box .v{font-size:13px;font-weight:600}
+.chat-tabs{display:flex;gap:8px;margin-bottom:10px;overflow-x:auto;padding-bottom:2px}
+.chat-tab{padding:9px 14px;border-radius:20px;background:var(--panel2);font-size:12.5px;white-space:nowrap;border:1px solid transparent}
+.chat-tab.active{border-color:var(--line);background:#24262a}
+.msgs{display:flex;flex-direction:column;gap:8px;max-height:340px;overflow-y:auto;padding:4px 2px;margin-bottom:10px}
+.msg{max-width:78%;padding:9px 12px;border-radius:12px;font-size:13px;line-height:1.4}
+.msg.in{background:var(--panel2);align-self:flex-start}
+.msg.out{background:#243a2b;align-self:flex-end}
+.msg .meta{display:block;color:var(--muted);font-size:10px;margin-top:3px}
+.chat-input{display:flex;gap:8px}
+.chat-input input{flex:1;background:#0e0f11;border:1px solid var(--line);color:var(--text);padding:12px;border-radius:10px;font-size:13.5px}
+.profile-head{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+.avatar{width:56px;height:56px;border-radius:50%;background:var(--panel2);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;border:1px solid var(--line)}
+.profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.profile-item .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;margin-bottom:3px}
+.profile-item .v{font-size:14px;font-weight:600}
+.empty{color:var(--muted);font-size:13px;text-align:center;padding:24px 10px}
+.new-req-form{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.new-req-form input{background:#0e0f11;border:1px solid var(--line);color:var(--text);padding:10px;border-radius:8px;font-size:13px}
+.new-req-form input.full{grid-column:1/-1}
+.new-req-form select{background:#0e0f11;border:1px solid var(--line);color:var(--text);padding:10px;border-radius:8px;font-size:13px;color-scheme:dark;width:100%;min-width:0}
+.new-req-form select:disabled{opacity:.5;cursor:not-allowed}
+.new-req-form input{min-width:0;width:100%}
+.form-sec{grid-column:1/-1;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;
+  border-bottom:1px solid var(--line);padding-bottom:4px;margin-top:6px}
+.form-sec:first-child{margin-top:0}
+.duration-note{grid-column:1/-1;background:#0e0f11;border:1px dashed var(--line);border-radius:8px;padding:10px;font-size:13px;color:var(--muted)}
+.duration-note b{color:var(--green);font-size:14px}
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--line);border-radius:10px}
+.req-table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:1160px}
+.req-table th{text-align:left;color:var(--muted);font-weight:600;font-size:10.5px;text-transform:uppercase;letter-spacing:.03em;
+  padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap;background:var(--panel2)}
+.req-table td{padding:10px;border-bottom:1px solid #202226;vertical-align:middle;white-space:nowrap}
+.req-table tr:last-child td{border-bottom:none}
+.req-table td.mono{font-variant-numeric:tabular-nums;color:var(--muted)}
+.req-table td.wr{font-weight:700}
+.req-table th.status-col,.req-table td.status-col{text-align:right}
+.req-table td.status-col .badge{margin-right:6px}
+.req-table td.status-col .card-x{display:inline-flex;vertical-align:middle}
+.profile-clock{grid-column:1/-1;background:#0e0f11;border:1px solid var(--line);border-radius:10px;padding:12px 14px;
+  display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.profile-clock .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+.profile-clock .t{font-size:26px;font-weight:700;color:var(--green);font-variant-numeric:tabular-nums;letter-spacing:.04em}
+.profile-clock .d{font-size:12px;color:var(--muted);margin-top:2px}
+.err-box{grid-column:1/-1;margin-top:8px;padding:10px 12px;border:1px solid var(--red);border-radius:8px;background:var(--red-bg);color:var(--red);font-size:13px;line-height:1.45}
+.slot-head{grid-column:1/-1;margin-top:8px;font-size:12.5px;color:var(--muted)}
+.slot-wrap{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.slot-btn{background:var(--green-bg);border:1px solid var(--green);color:var(--green);border-radius:8px;padding:9px 12px;font-size:13px;font-weight:600;cursor:pointer}
+.slot-btn:hover{filter:brightness(1.2)}
+.msg-note{margin-top:8px;padding:9px 11px;border:1px dashed var(--yellow);border-radius:8px;background:var(--yellow-bg);font-size:12.5px;line-height:1.45}
+.modal-box textarea{width:100%}
+.rj-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.rj-grid input{background:#0e0f11;border:1px solid var(--line);color:var(--text);padding:10px;border-radius:8px;font-size:13px;min-width:0;width:100%}
+.rj-grid input.full{grid-column:1/-1}
+@media(max-width:899px){
+  .menu-btn{display:flex}
+  .sidebar{display:flex;position:fixed;top:0;left:0;height:100%;width:260px;
+    padding-top:calc(18px + env(safe-area-inset-top,0px));
+    padding-bottom:calc(18px + env(safe-area-inset-bottom,0px));
+    transform:translateX(-100%);transition:transform .25s ease;z-index:50;
+    box-shadow:2px 0 24px rgba(0,0,0,.5)}
+  body.nav-open .sidebar{transform:translateX(0)}
+  body.nav-open .scrim{display:block;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:45}
+}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:50;padding:16px}
+.modal-box{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;width:100%;max-width:400px}
+.modal-box h3{margin:0 0 4px;font-size:15px}
+.modal-box .modal-sub{color:var(--muted);font-size:12px;margin:0 0 12px}
+.modal-box textarea{width:100%;background:#0e0f11;border:1px solid var(--line);color:var(--text);padding:10px;border-radius:10px;font-size:13.5px;font-family:inherit;resize:vertical;margin-bottom:12px}
+@media(min-width:900px){
+  .sidebar{display:flex}
+  .main{padding:24px 40px 40px;max-width:1600px;margin:0 auto;width:100%}
+  .cards{grid-template-columns:repeat(4,1fr)}
+  .topbar{margin:0 -40px 14px;padding:16px 40px}
+}
+@media(min-width:1400px){.cards{grid-template-columns:repeat(6,1fr)}}
+@media(max-width:420px){
+  .main{padding:12px 12px 16px}
+  .topbar{margin:0 -12px 14px;padding:10px 12px}
+  .topbar h1{font-size:17px}
+  .cards{gap:8px}
+  .card{padding:11px}
+  .card .n{font-size:19px}
+  .panel{padding:12px}
+  .work-card{padding:12px}
+  .meta-grid{grid-template-columns:1fr;gap:6px}
+  .flow-label{min-width:100px;font-size:12.5px}
+  .actions{flex-direction:column}
+  .btn{width:100%}
+  .sched-compare{flex-direction:column}
+  .chat-input input{padding:11px;font-size:13px}
+  .msg{max-width:88%}
+  .modal-box{padding:14px}
+  .new-req-form{grid-template-columns:1fr}
+}
+@media(max-width:340px){.cards{grid-template-columns:1fr}}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-thumb{background:#2c2e32;border-radius:4px}
+.badge.blue{background:rgba(59,130,246,.16);color:#60a5fa}
+.resp-table{min-width:1750px}
+.resp-table td.note{white-space:normal;min-width:230px;max-width:320px;color:var(--muted);font-size:12px;line-height:1.5}
+.resp-table td.work{white-space:normal;min-width:170px}
+.resp-table td.resp{white-space:normal;min-width:190px}
+.row-actions{display:flex;gap:8px}
+.row-actions .btn{padding:7px 12px;font-size:12px;flex:0 0 auto}
+.resp-table th.rt,.resp-table td.rt{text-align:right}
+.slot-groups{grid-column:1/-1;margin-top:6px;max-height:240px;overflow-y:auto}
+.slot-day{font-size:12px;font-weight:700;color:var(--text);margin:12px 0 6px}
+.slot-day span{color:var(--muted);font-weight:400}
+.slot-row{display:flex;flex-wrap:wrap;gap:8px}
+.slot-btn.sel{background:var(--green);color:#06210d}
+.pick-note{grid-column:1/-1;margin-top:8px;padding:9px 12px;border:1px solid var(--green);border-radius:8px;background:var(--green-bg);color:var(--green);font-size:13px;font-weight:600;display:none}
+.dur-hint{grid-column:1/-1;font-size:12px;color:var(--muted);margin:-2px 0 0}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand"><span class="dot"></span>
+      <div class="brand-text"><b>Worker Dashboard</b><span>{{ profile.user.username }} &middot; Live</span></div>
+    </div>
+    <div class="sidebar-nav" id="navList"></div>
+    <a href="{% url 'train_dashboard' %}" style="display:block;margin:10px 0 0;padding:9px 12px;border:1px solid var(--line);border-radius:8px;color:inherit;text-decoration:none;font-size:13px;text-align:center">&#128646; Live Train Tracking</a>
+    <div class="sidebar-foot"><a class="logout-link" href="{% url 'logout' %}">Logout</a></div>
+  </aside>
+  <div class="scrim" id="scrim"></div>
+
+  <main class="main">
+    <div class="topbar">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu">&#9776;</button>
+      <div class="tb-title">
+        <h1 id="pageTitle">Dashboard</h1>
+        <div class="sub" id="pageSub">Your assigned maintenance work, at a glance</div>
+      </div>
+    </div>
+
+    {% if messages %}{% for m in messages %}<div class="panel" style="border-color:var(--green)">{{ m }}</div>{% endfor %}{% endif %}
+
+    <div class="cards" id="summaryCards"></div>
+
+    <section class="section" id="sec-dashboard">
+      <div class="panel">
+        <h2>Needs Your Response</h2>
+        <div id="pendingResponsePreview"></div>
+      </div>
+    </section>
+
+    <section class="section" id="sec-requests">
+      <div class="panel">
+        <button class="btn primary full" type="button" id="openAddAssetBtn">+ Add Asset</button>
+      </div>
+      <div class="panel">
+        <h2>My Work Requests</h2>
+        <div id="requestsList"></div>
+      </div>
+    </section>
+
+    <section class="section" id="sec-approvals">
+      <div class="panel">
+        <h2>Approval Status</h2>
+        <div id="approvalsList"></div>
+      </div>
+    </section>
+
+    <section class="section" id="sec-mywork">
+      <div class="panel">
+        <h2>Awaiting Your Response</h2>
+        <div id="acceptanceList"></div>
+      </div>
+      <div class="panel">
+        <h2>Current Works</h2>
+        <div id="currentList"></div>
+      </div>
+    </section>
+
+    <section class="section" id="sec-reschedule">
+      <div class="panel">
+        <h2>Reschedule</h2>
+        <div id="rescheduleList"></div>
+      </div>
+    </section>
+
+    <section class="section" id="sec-completed">
+      <div class="panel">
+        <h2>Completed Works</h2>
+        <div id="completedList"></div>
+      </div>
+    </section>
+
+    <section class="section" id="sec-comm">
+      <div class="panel">
+        <h2>Communication</h2>
+        <div class="chat-tabs" id="chatTabs"></div>
+        <div class="msgs" id="chatMsgs"></div>
+        <div class="chat-input">
+          <input type="text" id="chatInput" placeholder="Message the officer...">
+          <button class="btn primary" id="chatSend" style="flex:0 0 auto">Send</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="sec-profile">
+      <div class="panel">
+        <div class="profile-head">
+          <div class="avatar">{{ profile.user.username|slice:":2"|upper }}</div>
+          <div>
+            <div style="font-size:16px;font-weight:700">{{ profile.user.username }}</div>
+            <div style="color:var(--muted);font-size:12.5px">{{ profile.get_department_display }}</div>
+          </div>
+        </div>
+        <div class="profile-grid">
+          <div class="profile-item"><div class="k">Name</div><div class="v">{{ profile.user.username }}</div></div>
+          <div class="profile-item"><div class="k">Department</div><div class="v">{% if profile.work_department %}{{ profile.work_department }} ({{ profile.get_department_display }}){% else %}{{ profile.get_department_display }}{% endif %}</div></div>
+          <div class="profile-item"><div class="k">Phone Number</div><div class="v">{{ profile.phone_number|default:"Not set" }}</div></div>
+          <div class="profile-item"><div class="k">Email ID</div><div class="v" style="word-break:break-all">{{ profile.user.email|default:"Not set" }}</div></div>
+          <div class="profile-item"><div class="k">Member Since</div><div class="v">{{ profile.user.date_joined|date:"d M Y" }}</div></div>
+          <div class="profile-clock">
+            <div><div class="k">Railway Time &middot; IST (24-hour)</div><div class="d" id="profRailDate">&nbsp;</div></div>
+            <div class="t" id="profRailTime">--:--:--</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="modal-overlay" id="addAssetModal">
+  <div class="modal-box" style="max-width:560px;max-height:88vh;overflow-y:auto">
+    <h3>Add Asset</h3>
+    <p class="modal-sub">Fill in the work request details. Request ID is generated automatically.</p>
+    <form class="new-req-form" id="newReqForm">
+      <input type="text" id="reqIdPreview" class="full" placeholder="Req ID" disabled style="opacity:.6">
+
+      <div class="form-sec">Division &amp; Section</div>
+      <select name="division" id="fDiv" required><option value="">Select division</option></select>
+      <select name="section" id="fSec" required disabled><option value="">Select division first</option></select>
+
+      <div class="form-sec">Stations</div>
+      <select name="from_station" id="fFromSt" required disabled><option value="">Select division first</option></select>
+      <select name="to_station" id="fToSt" required disabled><option value="">Select division first</option></select>
+
+      <div class="form-sec">Junctions</div>
+      <select name="from_junction" id="fFromJn" required disabled><option value="">Select division first</option></select>
+      <select name="to_junction" id="fToJn" required disabled><option value="">Select division first</option></select>
+
+      <div class="form-sec">Line &amp; Location</div>
+      <select name="track_line" id="fLine" required>
+        <option value="">Select line</option>
+        <option value="Up">Up</option>
+        <option value="Down">Down</option>
+      </select>
+      <input type="text" name="km" placeholder="KM (e.g. 245.5)" required>
+      <input type="text" name="location" class="full" placeholder="Location" required>
+
+      <div class="form-sec">Work</div>
+      <select name="priority" id="fPrio" required>
+        <option value="">Select priority</option>
+        <option value="Critical">Critical</option>
+        <option value="High">High</option>
+        <option value="Medium">Medium</option>
+        <option value="Low">Low</option>
+      </select>
+      <input type="text" name="work_details" placeholder="Work details" required>
+      <input type="text" name="work_description" class="full" placeholder="Work description" required>
+
+      <div class="form-sec">Schedule</div>
+      <input type="date" name="work_date" id="assetDate" class="full" placeholder="Asset block date" required>
+      <input type="number" name="dur_h" id="assetDurH" min="0" max="24" step="1" placeholder="Duration &ndash; hours" inputmode="numeric">
+      <input type="number" name="dur_m" id="assetDurM" min="0" max="59" step="1" placeholder="Duration &ndash; minutes" inputmode="numeric">
+      <input type="hidden" name="start_time" id="assetStartTime">
+      <div class="duration-note" id="assetDuration">Total duration: <b>&mdash;</b> <span style="font-size:11.5px">(type how long the work takes)</span></div>
+      <button class="btn primary" type="button" id="availTimeBtn" style="grid-column:1/-1;min-height:40px;padding:9px 14px">Available time</button>
+      <div class="dur-hint">Enter the date and the duration, then press <b>Available time</b> to see the train-free times. Every time shown stays <b>15 minutes clear before and after every train</b> and is as long as your duration. Today shows only times from now onwards. Each time is checked with 15 minutes before and 15 minutes after it (for example 3:00&ndash;4:00 is checked for trains from 2:45 to 4:15); hover a time to see the checked range.</div>
+      <div class="err-box" id="assetTimeErr" style="display:none"></div>
+      <div id="assetSlotsHead" class="slot-head" style="display:none"></div>
+      <div id="assetSlots" class="slot-groups"></div>
+      <div class="pick-note" id="assetPicked"></div>
+
+      <div class="form-sec">Contact</div>
+      <input type="text" name="name" placeholder="Name" required>
+      <input type="tel" name="phone_number" placeholder="Phone number" required>
+
+      <div class="actions" style="grid-column:1/-1">
+        <button class="btn" type="button" id="cancelAddAssetBtn">Cancel</button>
+        <button class="btn primary" type="submit">Send for Approval</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="reasonModal">
+  <div class="modal-box" style="max-width:520px;max-height:88vh;overflow-y:auto">
+    <h3>Not accepting this work</h3>
+    <p class="modal-sub">Write your message and press Reschedule time to choose a new free time. It goes to the Station Master and Division Master, who will approve or not approve the new time again.</p>
+    <div class="duration-note" id="rjInfo" style="margin-bottom:10px"></div>
+    <textarea id="reasonText" rows="3" placeholder="Type your message / reason here..."></textarea>
+    <div class="rj-grid">
+      <input type="date" id="rjDate" class="full" placeholder="Show times for another day (optional)">
+    </div>
+    <button class="btn primary" type="button" id="rjSlotsBtn" style="width:100%;margin-top:10px;min-height:40px;padding:9px 14px">Reschedule time</button>
+    <div class="err-box" id="rjErr" style="display:none"></div>
+    <div id="rjSlotsHead" class="slot-head" style="display:none"></div>
+    <div id="rjSlots" class="slot-groups"></div>
+    <div class="pick-note" id="rjPicked"></div>
+    <div class="actions">
+      <button class="btn" id="reasonCancel">Cancel</button>
+      <button class="btn primary" id="reasonSubmit">Submit</button>
+    </div>
+  </div>
+</div>
+
+{{ page_data|json_script:"page-data" }}
+<script>
+const PAGE = JSON.parse(document.getElementById('page-data').textContent);
+const CSRF = "{{ csrf_token }}";
+const URLS = {
+  respond: "{% url 'worker_respond' 0 %}",
+  complete: "{% url 'worker_complete' 0 %}",
+  del: "{% url 'worker_delete_request' 0 %}",
+  create: "{% url 'worker_create_request' %}",
+  avail: "{% url 'worker_available_times' %}",
+  slots: "{% url 'worker_request_slots' 0 %}",
+  message: "{% url 'send_message' %}",
+};
+function urlFor(kind, id){ return URLS[kind].replace('/0/', '/'+id+'/'); }
+function postForm(url, data){
+  const fd = new FormData(); fd.append('csrfmiddlewaretoken', CSRF); fd.append('tab','dashboard');
+  Object.entries(data||{}).forEach(([k,v])=>fd.append(k,v));
+  return fetch(url,{method:'POST',body:fd});
+}
+
+const NAV = [
+  {id:'dashboard',label:'Dashboard',icon:'<path d="M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v5H3z"/>'},
+  {id:'requests',label:'My Requests',icon:'<path d="M9 12h6M9 16h6M9 8h6"/><rect x="4" y="3" width="16" height="18" rx="2"/>'},
+  {id:'approvals',label:'Approvals',icon:'<path d="M20 6L9 17l-5-5"/>'},
+  {id:'mywork',label:'My Works',icon:'<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2"/>'},
+  {id:'reschedule',label:'Reschedule',icon:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/>'},
+  {id:'completed',label:'Completed',icon:'<circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/>'},
+  {id:'comm',label:'Messages',icon:'<path d="M21 11.5a8.4 8.4 0 01-8.9 8.4 9 9 0 01-3.3-.6L3 21l1.8-5.4A8.4 8.4 0 1121 11.5z"/>'},
+  {id:'profile',label:'Profile',icon:'<circle cx="12" cy="7" r="4"/><path d="M5.5 21a6.5 6.5 0 0113 0"/>'}
+];
+function svg(inner){return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${inner}</svg>`}
+function fmtDT(s){return s?new Date(s).toLocaleString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',hour12:false}):'—'}
+function fmtTimeOnly(s){return s?new Date(s).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:false}):'—'}
+function fmtDateOnly(s){return s?new Date(s).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):'—'}
+function fmtMins(mins){
+  if(mins==null || mins<=0) return '\u2014';
+  const h = Math.floor(mins/60), m = mins%60;
+  return [h?h+'h':'', m?m+'m':''].filter(Boolean).join(' ');
+}
+function durationStr(a,b){
+  if(!a||!b) return '\u2014';
+  return fmtMins(Math.round((new Date(b) - new Date(a))/60000));
+}
+function minsBetween(hhmmA, hhmmB){
+  const [ah,am] = hhmmA.split(':').map(Number), [bh,bm] = hhmmB.split(':').map(Number);
+  return (bh*60+bm) - (ah*60+am);
+}
+function fmtYMD(ymd){ // '2026-09-28' -> '28 Sep 2026' (no timezone shift)
+  const [y,m,d] = ymd.split('-').map(Number);
+  return new Date(y,m-1,d).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+}
+function fmtUpload(iso){
+  return iso ? new Date(iso).toLocaleString('en-IN',{timeZone:'Asia/Kolkata',day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:false}) : '\u2014';
+}
+// Block date / start / end / duration for a request: what the worker entered on the
+// Add Asset form, or (older/AI requests, or after a reschedule) the schedule window.
+function winOf(r){
+  // The server already applies any reschedule, so these are always the current time.
+  return {date: r.dateFull || fmtDateOnly(r.dateTime), start: r.startLabel || fmtTimeOnly(r.dateTime),
+          end: r.endLabel || fmtTimeOnly(r.endDateTime), total: r.duration || durationStr(r.dateTime, r.endDateTime)};
+}
+
+let requests = PAGE.requests;
+function prioBadge(p){
+  const v = String(p||'Normal');
+  const c = {critical:'red',high:'yellow',medium:'green'}[v.toLowerCase()] || 'grey';
+  return `<span class="badge ${c}">${v.toUpperCase()}</span>`;
+}
+function allApproved(r){ return r.approval.sm==='approved' && r.approval.dc==='approved'; }
+function badge(status){
+  const map={approved:'green',rejected:'red',pending:'yellow'};
+  const label={approved:'Approved',rejected:'Not Approved',pending:'Waiting'}[status];
+  return `<span class="badge ${map[status]}">${label}</span>`;
+}
+
+function renderNav(){
+  document.getElementById('navList').innerHTML = NAV.map(n=>
+    `<div class="nav-item" data-tab="${n.id}">${svg(n.icon)}<span>${n.label}</span></div>`).join('');
+  document.querySelectorAll('[data-tab]').forEach(el=>el.addEventListener('click',()=>{go(el.dataset.tab);closeNav();}));
+}
+function openNav(){ document.body.classList.add('nav-open'); }
+function closeNav(){ document.body.classList.remove('nav-open'); }
+document.getElementById('menuBtn').addEventListener('click', openNav);
+document.getElementById('scrim').addEventListener('click', closeNav);
+const SUBS = {
+  dashboard:'Your assigned maintenance work, at a glance',
+  requests:'All work requests assigned to or raised by you',
+  approvals:'Station Master \u2192 Division Control \u2192 You',
+  mywork:'Respond to new work and track what\u2019s active',
+  reschedule:'Requests with a changed date or time',
+  completed:'Work you have finished',
+  comm:'Talk to the officers handling your work',
+  profile:'Your details on file'
+};
+function go(tab){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('sec-'+tab).classList.add('active');
+  document.querySelectorAll('[data-tab]').forEach(el=>el.classList.toggle('active', el.dataset.tab===tab));
+  document.getElementById('pageTitle').textContent = NAV.find(n=>n.id===tab).label;
+  document.getElementById('pageSub').textContent = SUBS[tab];
+  document.querySelector('.main').scrollTo(0,0);
+  history.replaceState(null,'','#'+tab);
+}
+
+function renderCards(){
+  const total = requests.length;
+  const approved = requests.filter(allApproved).length;
+  const waiting = requests.filter(r=>!allApproved(r) && Object.values(r.approval).every(v=>v!=='rejected')).length;
+  const accepted = requests.filter(r=>allApproved(r) && r.response===true).length;
+  const active = requests.filter(r=>r.stage==='active').length;
+  const completed = requests.filter(r=>r.stage==='completed').length;
+  const resched = requests.filter(r=>r.reschedule.rescheduled).length;
+  const cards = [
+    {n:total,l:'My Requests'},
+    {n:approved,l:'Approved',c:'g'},
+    {n:waiting,l:'Waiting for Approval',c:'y'},
+    {n:accepted,l:'Accepted Works'},
+    {n:active,l:'Active Works'},
+    {n:completed,l:'Completed Works',c:'g'},
+    {n:resched,l:'Rescheduled Works',c:'y'}
+  ];
+  document.getElementById('summaryCards').innerHTML = cards.map(c=>`<div class="card ${c.c||''}"><div class="n">${c.n}</div><div class="l">${c.l}</div></div>`).join('');
+}
+
+function metaBlock(r){
+  return `<div class="meta-grid">
+    <div><b>${r.location}</b>Location</div>
+    <div><b>${r.fromJunction||'\u2014'} \u2192 ${r.toJunction||'\u2014'}</b>Junction</div>
+    <div><b>${r.fromStation||'\u2014'} \u2192 ${r.toStation||'\u2014'}</b>Station</div>
+    <div><b>${r.km}</b>KM / Work Location</div>
+    <div><b>${fmtDT(r.dateTime)}</b>Date &amp; Time</div>
+  </div>`;
+}
+const esc=t=>String(t==null?'':t).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+function timeMetaBlock(r){
+  const w = winOf(r);
+  return `<div class="meta-grid">
+    <div><b>${w.date}</b>Date</div>
+    <div><b>${w.start}</b>Start Time</div>
+    <div><b>${w.end}</b>End Time</div>
+    <div><b>${w.total}</b>Total Duration</div>
+  </div>`+aiInfoBlock(r);
+}
+function aiInfoBlock(r){
+  const bits=[];
+  if(r.asset&&r.asset!=='\u2014')bits.push('<b>Asset:</b> '+esc(r.asset));
+  const places=[r.fromStation,r.toStation].filter(Boolean).join(' \u2192 ');
+  if(places)bits.push('<b>Stations:</b> '+esc(places));
+  const juncs=[r.fromJunction,r.toJunction].filter(Boolean).join(' \u2192 ');
+  if(juncs)bits.push('<b>Junctions:</b> '+esc(juncs));
+  if(r.place&&r.place!=='\u2014')bits.push('<b>Location:</b> '+esc(r.place));
+  const cap=r.ctrlApproved?'<div class="given-time" style="margin-top:8px;color:var(--green)"><b>Approved by the Control Office</b></div>':'';
+  const aap=r.aiApproved?'<div class="given-time" style="margin-top:8px;color:var(--green)"><b>Approved automatically by the AI (no train in buffer / work time)</b></div>':'';
+  let h=cap+aap+(bits.length?'<div class="given-time" style="margin-top:8px">'+bits.join(' &nbsp;|&nbsp; ')+'</div>':'');
+  if(r.source==='AI'){
+    h='<div style="margin-top:8px"><span class="badge yellow">AI Suggested</span></div>'+h+
+      (r.aiNote?'<div class="given-time" style="margin-top:6px">'+esc(r.aiNote)+'</div>':'');
+  }
+  return h;
+}
+function stageLabel(r){
+  if(r.stage==='pending-approval') return ['grey','Awaiting Approval'];
+  if(r.stage==='pending-response') return ['yellow','Awaiting Your Response'];
+  if(r.stage==='active') return ['green','Active'];
+  if(r.stage==='completed') return ['green','Completed'];
+  if(r.stage==='declined') return ['red','Declined by You'];
+  if(r.stage==='resubmitted') return ['yellow','New Time Sent \u2013 Awaiting Approval'];
+  if(r.stage==='accepted-waiting') return ['green','Accepted \u2013 Waiting for other master'];
+  if(r.stage==='approved') return ['green','Approved \u2013 starts at start time'];
+  if(r.stage==='not-approved') return ['red','Not Approved'];
+  return ['grey',r.stage];
+}
+
+function approvalKey(r){
+  if(r.approval.sm==='rejected' || r.approval.dc==='rejected') return 'rejected';
+  if(allApproved(r)) return 'approved';
+  return 'pending';
+}
+// The one status an asset shows: Waiting, Approved, Not Approved, Active or Completed.
+function statusBadge(r){
+  if(r.stage==='completed') return '<span class="badge green">Completed</span>';
+  if(r.stage==='active') return '<span class="badge green">Active</span>';
+  if(r.stage==='not-approved') return '<span class="badge red">Not Approved</span>';
+  return badge(approvalKey(r));   // Approved / Waiting / Not Approved
+}
+function renderRequests(){
+  const head = ['WR','Priority','Division','Station','Section','Line','KM','Asset Upload Date','Start Time','End Time','Duration','Asset Block Date'];
+  const list = requests.filter(r=>r.stage!=='completed');   // completed assets live on the Completed page
+  const rows = list.map(r=>{
+    const w = winOf(r);
+    const del = r.ownedByMe ? `<button class="card-x" data-id="${r.reqId}" title="Withdraw request">&times;</button>` : '';
+    return `<tr>
+      <td class="wr" title="${(r.work||'').replace(/"/g,'&quot;')}">${r.id}</td>
+      <td>${prioBadge(r.priority)}</td>
+      <td>${r.division}</td>
+      <td>${r.fromStation||'\u2014'} \u2192 ${r.toStation||'\u2014'}</td>
+      <td>${r.section}</td>
+      <td>${r.line}</td>
+      <td class="mono">${r.kmValue}</td>
+      <td class="mono">${fmtUpload(r.uploadedAt)}</td>
+      <td class="mono">${w.start}</td>
+      <td class="mono">${w.end}</td>
+      <td class="mono">${w.total}</td>
+      <td class="mono">${w.date}</td>
+      <td class="status-col">${statusBadge(r)}${del}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('requestsList').innerHTML = list.length
+    ? `<div class="tbl-wrap"><table class="req-table"><thead><tr>${head.map(h=>`<th>${h}</th>`).join('')}<th class="status-col">Status</th></tr></thead><tbody>${rows}</tbody></table></div>`
+    : `<div class="empty">No work requests.</div>`;
+  document.querySelectorAll('#requestsList .card-x').forEach(b=>b.addEventListener('click',()=>{
+    if(confirm('Withdraw this work request?')) postForm(urlFor('del',b.dataset.id),{}).then(()=>location.reload());
+  }));
+}
+
+function renderApprovals(){
+  // Every asset with its status: Waiting, Approved, Not Approved, Active or Completed.
+  if(!requests.length){
+    document.getElementById('approvalsList').innerHTML = `<div class="empty">No approvals to show.</div>`;
+    return;
+  }
+  const head=['Req ID','Work','Priority','Division','Stations','Date','Start','End','Station Master','Division Master','Worker (You)','Status'];
+  const rows=requests.map(r=>{
+    const w=winOf(r);
+    // Assigned = you uploaded it and nobody changed its time. Accept / Not Accept appears only
+    // when a master (or the AI) moves the time.
+    const wl = r.workerLabel;
+    const wk = wl==='ASSIGNED' ? '<span class="badge blue">Assigned</span>'
+             : wl==='ACCEPTED' ? '<span class="badge green">Accepted</span>'
+             : wl==='NOT ACCEPTED' ? '<span class="badge red">Not Accepted</span>'
+             : (r.stage==='pending-response' ? '<span class="badge yellow">Accept / Not Accept</span>' : '<span class="badge yellow">Waiting</span>');
+    return `<tr>
+      <td class="wr">${esc(r.id)}</td>
+      <td class="work">${esc(r.work)}<div class="muted" style="font-size:11px">${esc(r.asset)}</div></td>
+      <td>${prioBadge(r.priority)}</td><td>${esc(r.division)}</td>
+      <td>${esc(r.fromStation||'\u2014')} \u2192 ${esc(r.toStation||'\u2014')}</td>
+      <td class="mono">${w.date}</td><td class="mono">${w.start}</td><td class="mono">${w.end}</td>
+      <td>${badge(r.approval.sm)}</td><td>${badge(r.approval.dc)}</td><td>${wk}</td>
+      <td>${statusBadge(r)}</td></tr>`;
+  }).join('');
+  document.getElementById('approvalsList').innerHTML =
+    `<div class="tbl-wrap"><table class="req-table" style="min-width:1150px"><thead><tr>${head.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+
+// ---- Response tables ----------------------------------------------------------
+function rescheduledCell(r){
+  if(r.rby==='WORKER') return '<span class="badge yellow">You</span><div>'+esc(r.workerReason||'\u2014')+'</div>';
+  if(r.rby==='STATION'||r.rby==='DIVISION'||r.rby==='CTRL')
+    return '<span class="badge yellow">'+esc(r.rbyLabel)+'</span><div>'+esc(r.rmsg||'\u2014')+'</div>';
+  if(r.rby==='AI') return '<span class="badge blue">AI</span><div>Moved to a train-free time</div>';
+  return '<span class="muted">\u2014</span>';
+}
+function responseCell(r){
+  const who = r.workerLabel==='ASSIGNED' ? 'Assigned' : 'Accepted';
+  if(r.stage==='pending-response')
+    return `<div class="row-actions"><button class="btn accept" data-id="${r.reqId}" data-resp="true">ACCEPT</button><button class="btn reject" data-id="${r.reqId}" data-resp="false">NOT ACCEPT</button></div>`;
+  if(r.stage==='resubmitted')
+    return '<span class="badge yellow">Not accepted &mdash; new time sent</span><div class="muted" style="font-size:11.5px;margin-top:4px">Waiting for Station Master &amp; Division Master</div>'
+      +(r.workerReason?'<div class="muted" style="font-size:11.5px;margin-top:4px">Your message: '+esc(r.workerReason)+'</div>':'');
+  if(r.stage==='accepted-waiting') return '<span class="badge green">Accepted</span><div class="muted" style="font-size:11.5px;margin-top:4px">Active when the other master approves the new time</div>';
+  if(r.stage==='active') return '<span class="badge green">'+who+' &mdash; Active</span>';
+  if(r.stage==='approved'){ const w=winOf(r); return '<span class="badge green">'+who+' &mdash; Approved</span><div class="muted" style="font-size:11.5px;margin-top:4px">Becomes Active at '+esc(w.date)+' '+esc(w.start)+'</div>'; }
+  if(r.stage==='not-approved') return '<span class="badge red">Not Approved</span><div class="muted" style="font-size:11.5px;margin-top:4px">Not approved by Station Master &amp; Division Master</div>';
+  if(r.stage==='declined') return '<span class="badge red">Not Accepted</span>'+(r.workerReason?'<div class="muted" style="font-size:11.5px;margin-top:4px">'+esc(r.workerReason)+'</div>':'');
+  if(r.stage==='completed') return '<span class="badge green">Completed</span>';
+  if(r.workerLabel==='ASSIGNED') return '<span class="badge blue">Assigned</span><div class="muted" style="font-size:11.5px;margin-top:4px">Waiting for Station Master &amp; Division Master</div>';
+  return '<span class="badge grey">Waiting for approval</span>';
+}
+// One table function, two layouts:
+//   'dashboard' = Needs Your Response: Source, Your response and the Approval Status on the right
+//                 (no separate Station / Division Master columns)
+//   'mywork'    = My Works: the Station Master and Division Master status
+//                 (no Source, Your response or Approval Status columns)
+function respTable(list, emptyMsg, mode){
+  if(!list.length) return `<div class="empty">${emptyMsg}</div>`;
+  const dash = mode==='dashboard';
+  const head = dash
+    ? ['Req ID','Source','Work','Priority','Division','Section','Stations','KM','Date','Start','End','Duration','Rescheduled by','Your response','Approval Status']
+    : ['Req ID','Work','Priority','Division','Section','Stations','KM','Date','Start','End','Duration','Rescheduled by','Station Master','Division Master'];
+  const rows=list.map(r=>{
+    const w=winOf(r);
+    const src=r.source==='AI'?'<span class="badge blue">AI Suggested</span>':'<span class="badge grey">My Asset</span>';
+    return `<tr>
+      <td class="wr">${esc(r.id)}</td>${dash?`<td>${src}</td>`:''}
+      <td class="work">${esc(r.work)}<div class="muted" style="font-size:11px">${esc(r.asset)}</div></td>
+      <td>${prioBadge(r.priority)}</td><td>${esc(r.division)}</td><td>${esc(r.section)}</td>
+      <td>${esc(r.fromStation||'\u2014')} \u2192 ${esc(r.toStation||'\u2014')}</td><td class="mono">${esc(r.kmValue)}</td>
+      <td class="mono">${w.date}</td><td class="mono">${w.start}</td><td class="mono">${w.end}</td><td class="mono">${w.total}</td>
+      <td class="note">${rescheduledCell(r)}</td>${dash
+        ? `<td class="resp">${responseCell(r)}</td><td class="rt">${statusBadge(r)}</td>`
+        : `<td class="rt">${badge(r.approval.sm)}</td><td class="rt">${badge(r.approval.dc)}</td>`}</tr>`;
+  }).join('');
+  return `<div class="tbl-wrap"><table class="req-table resp-table"><thead><tr>${head.map((h,i)=>`<th${i>=head.length-(dash?1:2)?' class="rt"':''}>${h}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+function bindRespButtons(root){
+  document.querySelectorAll(root+' button[data-resp]').forEach(b=>b.addEventListener('click',()=>handleRespond(b.dataset.id,b.dataset.resp==='true')));
+}
+function renderMyWork(){
+  // Every asset this worker uploaded (or was given), with the Station / Division Master status.
+  const all = requests.filter(r=>r.stage!=='completed');
+  document.getElementById('acceptanceList').innerHTML = respTable(all, 'You have not uploaded any asset yet.', 'mywork');
+  bindRespButtons('#acceptanceList');
+
+  // Current Works: every asset that is Active now (its start time has come, and it is approved).
+  const active = requests.filter(r=>r.stage==='active');
+  if(!active.length){
+    document.getElementById('currentList').innerHTML = `<div class="empty">No active works right now.</div>`;
+    return;
+  }
+  const head=['Req ID','Work','Priority','Division','Section','Stations','KM','Date','Start','End','Duration','Status','Action'];
+  const rows=active.map(r=>{
+    const w=winOf(r);
+    return `<tr>
+      <td class="wr">${esc(r.id)}</td>
+      <td class="work">${esc(r.work)}<div class="muted" style="font-size:11px">${esc(r.asset)}</div></td>
+      <td>${prioBadge(r.priority)}</td><td>${esc(r.division)}</td><td>${esc(r.section)}</td>
+      <td>${esc(r.fromStation||'\u2014')} \u2192 ${esc(r.toStation||'\u2014')}</td><td class="mono">${esc(r.kmValue)}</td>
+      <td class="mono">${w.date}</td><td class="mono">${w.start}</td><td class="mono">${w.end}</td><td class="mono">${w.total}</td>
+      <td><span class="badge green">Active</span></td>
+      <td><button class="btn primary" style="flex:none;min-height:34px;padding:6px 12px;font-size:12.5px" onclick="markComplete(${r.reqId})">Mark Completed</button></td></tr>`;
+  }).join('');
+  document.getElementById('currentList').innerHTML =
+    `<div class="tbl-wrap"><table class="req-table" style="min-width:1150px"><thead><tr>${head.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+function markComplete(reqId){ postForm(urlFor('complete',reqId),{}).then(()=>location.reload()); }
+
+// Every asset whose time was changed (by the AI, a master, or you), with the old and new time.
+function renderReschedule(){
+  const list = requests.filter(r=>r.reschedule.rescheduled && r.stage!=='completed');
+  if(!list.length){
+    document.getElementById('rescheduleList').innerHTML = `<div class="empty">No rescheduled assets right now.</div>`;
+    return;
+  }
+  const head=['Req ID','Work','Original time','New time','Rescheduled by','Your response'];
+  const rows=list.map(r=>{
+    const w=winOf(r);
+    return `<tr><td class="wr">${esc(r.id)}</td><td class="work">${esc(r.work)}<div class="muted" style="font-size:11px">${esc(r.asset)}</div></td>
+      <td class="mono">${esc(r.origLabel)}</td><td class="mono"><b>${w.date} ${w.start}&ndash;${w.end}</b> (${w.total})</td>
+      <td class="note">${rescheduledCell(r)}</td><td class="resp">${responseCell(r)}</td>
+      <td class="rt">${badge(r.approval.sm)}</td><td class="rt">${badge(r.approval.dc)}</td></tr>`;
+  }).join('');
+  document.getElementById('rescheduleList').innerHTML =
+    `<div class="tbl-wrap"><table class="req-table resp-table" style="min-width:1150px"><thead><tr>${head.map(h=>`<th>${h}</th>`).join('')}<th class="rt">Station Master</th><th class="rt">Division Master</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  bindRespButtons('#rescheduleList');
+}
+
+function renderCompleted(){
+  // Completed Works: every asset whose end time has passed (or that you marked completed).
+  const done = requests.filter(r=>r.stage==='completed');
+  if(!done.length){
+    document.getElementById('completedList').innerHTML = `<div class="empty">No completed works yet.</div>`;
+    return;
+  }
+  const head=['Req ID','Work','Priority','Division','Section','Location','Stations','KM','Date','Start','End','Duration','Completed At','Status'];
+  const rows=done.map(r=>{
+    const w=winOf(r);
+    return `<tr>
+      <td class="wr">${esc(r.id)}</td>
+      <td class="work">${esc(r.work)}<div class="muted" style="font-size:11px">${esc(r.asset)}</div></td>
+      <td>${prioBadge(r.priority)}</td><td>${esc(r.division)}</td><td>${esc(r.section)}</td><td>${esc(r.place)}</td>
+      <td>${esc(r.fromStation||'\u2014')} \u2192 ${esc(r.toStation||'\u2014')}</td><td class="mono">${esc(r.kmValue)}</td>
+      <td class="mono">${w.date}</td><td class="mono">${w.start}</td><td class="mono">${w.end}</td><td class="mono">${w.total}</td>
+      <td class="mono">${fmtUpload(r.completedAt)}</td>
+      <td><span class="badge green">Completed</span></td></tr>`;
+  }).join('');
+  document.getElementById('completedList').innerHTML =
+    `<div class="tbl-wrap"><table class="req-table" style="min-width:1300px"><thead><tr>${head.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+
+function renderPendingPreview(){
+  // Needs Your Response: work waiting for your Accept / Not Accept, the new times you sent back,
+  // and the work you already answered - it stays here, with its status on the right, after you Accept.
+  const rows = requests.filter(r=>['pending-response','resubmitted','accepted-waiting','approved','active','declined'].includes(r.stage));
+  document.getElementById('pendingResponsePreview').innerHTML = respTable(rows, 'Nothing waiting on your response right now.', 'dashboard');
+  bindRespButtons('#pendingResponsePreview');
+}
+
+const contacts = PAGE.contacts;
+let activeChat = contacts.length ? contacts[0].code : null;
+function renderChatTabs(){
+  document.getElementById('chatTabs').innerHTML = contacts.map(c=>`<div class="chat-tab ${c.code===activeChat?'active':''}" data-c="${c.code}">${c.label}</div>`).join('');
+  document.querySelectorAll('.chat-tab').forEach(el=>el.addEventListener('click',()=>{activeChat=el.dataset.c;renderChatTabs();renderMsgs();}));
+}
+function renderMsgs(){
+  const c = contacts.find(x=>x.code===activeChat);
+  document.getElementById('chatMsgs').innerHTML = (c && c.messages.length) ? c.messages.map(m=>`<div class="msg ${m.dir}">${m.t}<span class="meta">${m.time}</span></div>`).join('') : `<div class="empty">No messages yet.</div>`;
+  const box = document.getElementById('chatMsgs'); box.scrollTop = box.scrollHeight;
+}
+document.getElementById('chatSend').addEventListener('click',sendMsg);
+document.getElementById('chatInput').addEventListener('keydown',e=>{if(e.key==='Enter')sendMsg();});
+function sendMsg(){
+  const inp = document.getElementById('chatInput');
+  if(!inp.value.trim() || !activeChat) return;
+  postForm(URLS.message, {department: activeChat, body: inp.value.trim()}).then(()=>location.reload());
+}
+
+// ---- Shared: post a form and read the JSON answer, list free time slots -------
+const $f = id => document.getElementById(id);
+function postJson(url, data){
+  return postForm(url, Object.assign({ajax:'1'}, data||{}))
+    .then(r=>r.json().then(j=>({ok:r.ok&&j.ok, j})));
+}
+function showBox(el, text){ el.textContent = text||''; el.style.display = text ? 'block' : 'none'; }
+// Draws the free times, grouped by day. Each button is one window exactly as long as the asset's duration.
+function drawSlots(headEl, boxEl, j, onPick){
+  boxEl.innerHTML = ''; headEl.style.display = 'none';
+  const groups = (j && j.groups) || [];
+  const KIND = {today:'today, earlier option', before:'nearest earlier day', after:'next day with free time'};
+  if(groups.length){
+    headEl.style.display = 'block';
+    headEl.textContent = 'Free times'+(j.duration?' \u2014 each '+j.duration+' long':'')+', no train on the line:'+(j.note?'  '+j.note:'');
+    groups.forEach(g=>{
+      const t = document.createElement('div'); t.className = 'slot-day';
+      t.innerHTML = esc(g.label)+(KIND[g.kind]?' <span>&middot; '+KIND[g.kind]+'</span>':'');
+      const row = document.createElement('div'); row.className = 'slot-row';
+      g.slots.forEach(x=>{
+        const b = document.createElement('button');
+        b.type = 'button'; b.className = 'slot-btn'; b.textContent = x.start+' \u2013 '+x.end; b.title = x.checked || '';
+        b.addEventListener('click', ()=>{ boxEl.querySelectorAll('.slot-btn').forEach(k=>k.classList.remove('sel')); b.classList.add('sel'); onPick(x); });
+        row.appendChild(b);
+      });
+      boxEl.appendChild(t); boxEl.appendChild(row);
+    });
+  } else if(j && (j.note || j.wrong)){
+    headEl.style.display = 'block';
+    headEl.textContent = j.note || 'No free time found.';
+  }
+}
+function setPick(el, v){ if(el._flatpickr) el._flatpickr.setDate(v, false); else el.value = v; }
+function addMinutes(hhmm, mins){
+  const [h,m] = hhmm.split(':').map(Number);
+  const t = ((h*60+m+mins)%1440+1440)%1440;
+  return String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0');
+}
+// End of a window; if it runs past midnight the end is on the next day.
+function endIso(d, st, et){
+  let day = d;
+  if(et <= st){ const x = new Date(d+'T00:00:00'); x.setDate(x.getDate()+1);
+    day = x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0'); }
+  return `${day}T${et}:00`;
+}
+
+// ---- Not accepting a work: message + new time, then submit ------------------
+let pendingRejectId = null, pendingDur = 120;
+function handleRespond(id, accepted){
+  if(accepted){ postForm(urlFor('respond',id), {decision:'accept'}).then(()=>location.reload()); }
+  else { openReasonModal(id); }
+}
+let rjPick = null;
+function openReasonModal(id){
+  pendingRejectId = id; rjPick = null;
+  const r = requests.find(x=>String(x.reqId)===String(id)) || {};
+  pendingDur = r.durMin || 120;
+  const w = r.reqId ? winOf(r) : {date:'\u2014',start:'\u2014',end:'\u2014',total:'\u2014'};
+  const by = r.rbyLabel ? ` Time changed by <b>${esc(r.rbyLabel)}</b>${r.rmsg?': '+esc(r.rmsg):''}.` : '';
+  $f('rjInfo').innerHTML = `Current time: <b>${w.date} ${w.start} \u2013 ${w.end}</b> &nbsp;(duration <b>${w.total}</b>).${by} The new time will also be ${w.total} long.`;
+  $f('reasonText').value = '';
+  setPick($f('rjDate'), '');
+  showBox($f('rjErr'), ''); drawSlots($f('rjSlotsHead'), $f('rjSlots'), null); showBox($f('rjPicked'), '');
+  $f('reasonModal').style.display = 'flex';
+  setTimeout(()=>$f('reasonText').focus(),0);
+}
+function closeReasonModal(){
+  $f('reasonModal').style.display = 'none';
+  pendingRejectId = null;
+}
+function pickRjSlot(x){
+  rjPick = x; showBox($f('rjErr'), '');
+  showBox($f('rjPicked'), 'New time selected: '+x.label+(x.check_from?' (trains checked '+x.check_from+'\u2013'+x.check_to+')':''));
+}
+$f('rjSlotsBtn').addEventListener('click', ()=>{
+  const d = $f('rjDate').value;
+  rjPick = null; showBox($f('rjPicked'), ''); showBox($f('rjErr'), '');
+  $f('rjSlotsHead').style.display = 'block'; $f('rjSlotsHead').textContent = 'Checking live trains...'; $f('rjSlots').innerHTML = '';
+  fetch(urlFor('slots',pendingRejectId)+(d?'?date='+encodeURIComponent(d):''), {credentials:'same-origin'})
+    .then(r=>r.json()).then(j=>{
+      if(!j.ok){ $f('rjSlotsHead').style.display='none'; showBox($f('rjErr'), j.error||'Could not load times.'); return; }
+      drawSlots($f('rjSlotsHead'), $f('rjSlots'), j, pickRjSlot);
+    }).catch(()=>{ $f('rjSlotsHead').style.display='none'; showBox($f('rjErr'), 'Network error - try again.'); });
+});
+$f('reasonCancel').addEventListener('click', closeReasonModal);
+$f('reasonModal').addEventListener('click', (e)=>{ if(e.target.id==='reasonModal') closeReasonModal(); });
+$f('reasonSubmit').addEventListener('click', ()=>{
+  const reason = $f('reasonText').value.trim();
+  if(!reason){ showBox($f('rjErr'), 'Please write your message - why you cannot accept this work.'); $f('reasonText').focus(); return; }
+  if(!rjPick){ showBox($f('rjErr'), 'Please press "Reschedule time" and choose one of the free times.'); return; }
+  showBox($f('rjErr'), '');
+  postJson(urlFor('respond',pendingRejectId), {decision:'reject', reason, start:rjPick.start_iso+':00', end:rjPick.end_iso+':00'})
+    .then(({ok,j})=>{
+      if(ok){ location.hash = 'dashboard'; location.reload(); return; }
+      showBox($f('rjErr'), (j.wrong?'WRONG TIME \u2014 ':'')+(j.error||'Could not send.'));
+      rjPick = null; showBox($f('rjPicked'), '');
+      drawSlots($f('rjSlotsHead'), $f('rjSlots'), j, pickRjSlot);
+    }).catch(()=>showBox($f('rjErr'), 'Network error - try again.'));
+});
+
+// ---- Add Asset: Division -> Section / Stations / Junctions ------------------
+const RW = PAGE.railway || {};
+const escH = v => String(v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+const byName = (x,y) => x.localeCompare(y);
+
+function setOpts(sel, list, placeholder, keepValue){
+  const cur = keepValue || '';
+  const items = [...list].sort(byName);
+  sel.innerHTML = `<option value="">${escH(placeholder)}</option>` + items.map(v=>`<option value="${escH(v)}">${escH(v)}</option>`).join('');
+  sel.value = items.includes(cur) ? cur : '';
+  sel.disabled = items.length === 0;
+}
+// A "From" and "To" pair can't pick the same value: each list hides the other's choice.
+function refreshPair(aSel, bSel, list, phA, phB){
+  const av = aSel.value, bv = bSel.value;
+  setOpts(aSel, list.filter(x=>x!==bv), phA, av);
+  setOpts(bSel, list.filter(x=>x!==av), phB, bv);
+}
+function onDivisionChange(){
+  const d = RW[$f('fDiv').value];
+  const wait = 'Select division first';
+  if(!d){
+    setOpts($f('fSec'), [], wait);
+    ['fFromSt','fToSt','fFromJn','fToJn'].forEach(id=>setOpts($f(id), [], wait));
+    return;
+  }
+  setOpts($f('fSec'), d.sections, 'Select section');
+  setOpts($f('fFromSt'), d.stations, 'From station');
+  setOpts($f('fToSt'), d.stations, 'To station');
+  setOpts($f('fFromJn'), d.junctions, 'From junction');
+  setOpts($f('fToJn'), d.junctions, 'To junction');
+}
+function onStationChange(){
+  const d = RW[$f('fDiv').value]; if(!d) return;
+  refreshPair($f('fFromSt'), $f('fToSt'), d.stations, 'From station', 'To station');
+}
+function onJunctionChange(){
+  const d = RW[$f('fDiv').value]; if(!d) return;
+  refreshPair($f('fFromJn'), $f('fToJn'), d.junctions, 'From junction', 'To junction');
+}
+$f('fDiv').innerHTML = '<option value="">Select division</option>' + Object.keys(RW).sort(byName).map(v=>`<option value="${escH(v)}">${escH(v)}</option>`).join('');
+$f('fDiv').addEventListener('change', onDivisionChange);
+$f('fFromSt').addEventListener('change', onStationChange);
+$f('fToSt').addEventListener('change', onStationChange);
+$f('fFromJn').addEventListener('change', onJunctionChange);
+$f('fToJn').addEventListener('change', onJunctionChange);
+
+// ---- Add Asset: the worker types the DURATION, then picks a train-free time ------
+function assetDurMin(){
+  const h = parseInt($f('assetDurH').value||'0',10)||0, m = parseInt($f('assetDurM').value||'0',10)||0;
+  return h*60+m;
+}
+function recomputeTotalTime(){
+  const mins = assetDurMin(), out = $f('assetDuration');
+  const note = '<span style="font-size:11.5px">(type how long the work takes)</span>';
+  if(!mins){ out.innerHTML = `Total duration: <b>\u2014</b> ${note}`; return null; }
+  if(mins < 5 || mins > 1440){ out.innerHTML = `Total duration: <b style="color:var(--red)">Enter between 5 minutes and 24 hours</b>`; return null; }
+  out.innerHTML = `Total duration: <b>${fmtMins(mins)}</b> ${note}`;
+  return mins;
+}
+// A new date or duration makes the old choice stale.
+function clearAssetPick(){
+  $f('assetStartTime').value = '';
+  showBox($f('assetPicked'), '');
+  $f('assetSlots').innerHTML = ''; $f('assetSlotsHead').style.display = 'none';
+  $f('assetSlots').querySelectorAll('.slot-btn').forEach(b=>b.classList.remove('sel'));
+}
+['assetDurH','assetDurM'].forEach(id=>$f(id).addEventListener('input', ()=>{ recomputeTotalTime(); clearAssetPick(); }));
+$f('assetDate').addEventListener('change', clearAssetPick);
+
+function openAddAssetModal(){
+  $f('newReqForm').reset();
+  $f('reqIdPreview').value = 'Auto-generated on submit';
+  onDivisionChange();
+  recomputeTotalTime();
+  $f('assetStartTime').value = '';
+  showBox($f('assetTimeErr'), ''); showBox($f('assetPicked'), '');
+  $f('assetSlots').innerHTML = ''; $f('assetSlotsHead').style.display = 'none';
+  const today = new Date(); const ymd = today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+  if($f('assetDate')._flatpickr) $f('assetDate')._flatpickr.set('minDate', ymd); else $f('assetDate').min = ymd;
+  $f('addAssetModal').style.display = 'flex';
+}
+function closeAddAssetModal(){
+  $f('addAssetModal').style.display = 'none';
+}
+$f('openAddAssetBtn').addEventListener('click', openAddAssetModal);
+$f('cancelAddAssetBtn').addEventListener('click', closeAddAssetModal);
+$f('addAssetModal').addEventListener('click', (e)=>{ if(e.target.id==='addAssetModal') closeAddAssetModal(); });
+
+function pickAssetSlot(x){
+  // The chosen window may be on another day than the typed date (nearest earlier / next day).
+  setPick($f('assetDate'), x.date);
+  $f('assetStartTime').value = x.start;
+  showBox($f('assetTimeErr'), '');
+  showBox($f('assetPicked'), 'Selected time: '+x.label+(x.check_from?' (trains checked '+x.check_from+'\u2013'+x.check_to+')':''));
+}
+function assetFormData(){
+  const data = {}; new FormData($f('newReqForm')).forEach((v,k)=>{ data[k]=v; });
+  return data;
+}
+function showAssetTimeResult(j){
+  showBox($f('assetTimeErr'), j.ok ? '' : ((j.wrong?'WRONG TIME \u2014 ':'')+(j.error||'Could not check the time.')));
+  $f('assetStartTime').value = ''; showBox($f('assetPicked'), '');
+  drawSlots($f('assetSlotsHead'), $f('assetSlots'), j, pickAssetSlot);
+}
+$f('availTimeBtn').addEventListener('click', ()=>{
+  const d = assetFormData();
+  if(!d.work_date){ showBox($f('assetTimeErr'), 'Please choose the asset block date first.'); return; }
+  if(recomputeTotalTime() === null){ showBox($f('assetTimeErr'), 'Please enter how long the work takes (hours and/or minutes).'); return; }
+  showBox($f('assetTimeErr'), '');
+  $f('assetSlotsHead').style.display = 'block'; $f('assetSlotsHead').textContent = 'Checking live trains...'; $f('assetSlots').innerHTML = '';
+  postJson(URLS.avail, d).then(({ok,j})=>{
+    if(!ok){ $f('assetSlotsHead').style.display = 'none'; showBox($f('assetTimeErr'), j.error||'Could not load the available times.'); return; }
+    showBox($f('assetTimeErr'), '');
+    $f('assetStartTime').value = ''; showBox($f('assetPicked'), '');
+    drawSlots($f('assetSlotsHead'), $f('assetSlots'), j, pickAssetSlot);
+  }).catch(()=>{ $f('assetSlotsHead').style.display = 'none'; showBox($f('assetTimeErr'), 'Network error - try again.'); });
+});
+$f('newReqForm').addEventListener('submit', e=>{
+  e.preventDefault();
+  if(recomputeTotalTime() === null){ showBox($f('assetTimeErr'), 'Please enter how long the work takes (hours and/or minutes).'); return; }
+  if(!$f('assetStartTime').value){ showBox($f('assetTimeErr'), 'Press "Available time" and choose one of the free times first.'); $f('assetTimeErr').scrollIntoView({block:'center',behavior:'smooth'}); return; }
+  postJson(URLS.create, assetFormData())
+    .then(({ok,j})=>{ if(ok){ location.hash = 'mywork'; location.reload(); } else { showAssetTimeResult(j); $f('assetTimeErr').scrollIntoView({block:'center',behavior:'smooth'}); } })
+    .catch(()=>alert('Could not send the request. Please try again.'));
+});
+
+// ---- Profile: live railway time (IST, 24-hour) -----------------------------
+function tickRailClock(){
+  const now = new Date();
+  $f('profRailTime').textContent = now.toLocaleTimeString('en-GB',{timeZone:'Asia/Kolkata',hourCycle:'h23'});
+  $f('profRailDate').textContent = now.toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata',weekday:'long',day:'2-digit',month:'short',year:'numeric'});
+}
+tickRailClock(); setInterval(tickRailClock, 1000);
+
+function renderAll(){
+  renderCards(); renderRequests(); renderApprovals(); renderMyWork(); renderReschedule(); renderCompleted(); renderPendingPreview();
+}
+renderNav(); renderChatTabs(); renderMsgs(); renderAll();
+(function(){const h=(location.hash||'#dashboard').slice(1); if(NAV.find(n=>n.id===h)) go(h); else go('dashboard');})();
+</script>
+<script>
+// Keeps the statuses live. The server moves an asset to Active / Completed / Not Approved when its
+// start or end time comes; every 30 seconds this page asks if anything changed and refreshes itself
+// (never while you are typing or a pop-up is open).
+(function(){
+  var SIG = (typeof PAGE !== 'undefined') ? PAGE.sig : null, URL = "{% url 'lifecycle_status' %}";
+  if(!SIG) return;
+  function busy(){
+    var a = document.activeElement;
+    if(a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return true;
+    return Array.prototype.some.call(document.querySelectorAll('.modal-overlay,#naiModal'), function(m){ return getComputedStyle(m).display !== 'none'; });
+  }
+  setInterval(function(){
+    if(document.hidden || busy()) return;
+    fetch(URL, {credentials:'same-origin'}).then(function(r){ return r.json(); }).then(function(j){
+      if(j && j.sig && j.sig !== SIG){
+        var v = document.querySelector('.view.active');
+        if(v) history.replaceState(null, '', '#' + v.id.replace('view-', ''));
+        location.reload();
+      }
+    }).catch(function(){});
+  }, 30000);
+})();
+</script>
+{% include '_datepicker.html' %}
+<style>
+#cmpBg{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:1200;display:none;align-items:center;justify-content:center;padding:16px}
+#cmpBox{background:#10151d;color:#e6edf3;border:1px solid #f59e0b;border-top:5px solid #f59e0b;border-radius:12px;padding:20px;width:100%;max-width:440px;font:13.5px/1.5 'IBM Plex Sans',system-ui,sans-serif}
+#cmpBox h3{margin:0 0 6px;font-size:16px;color:#fbbf24}
+#cmpBox .det{color:#9fb0c3;font-size:12px;margin:6px 0 12px}
+#cmpBox .row{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+#cmpBox button{cursor:pointer;border-radius:8px;padding:9px 16px;font-weight:700;border:1px solid #f59e0b;background:transparent;color:#e6edf3}
+#cmpBox button.go{background:#f59e0b;color:#2b1b0b}
+#cmpBox button.ok{background:#22c55e;border-color:#22c55e;color:#06210f}
+#cmpBox input{width:80px;border-radius:8px;border:1px solid #2b3544;background:#0b0f15;color:#e6edf3;padding:8px;font:inherit;margin:0 6px 0 0}
+#cmpBox .er{display:none;color:#fca5a5;font-size:12px;margin-top:8px}
+#cmpNote{position:fixed;right:14px;bottom:14px;z-index:1100;display:none;max-width:340px;background:#2b1b0b;border:1px solid #f59e0b;color:#fde9c8;border-radius:10px;padding:10px 14px;font:12.5px/1.5 'IBM Plex Sans',system-ui,sans-serif}
+</style>
+<div id="cmpBg"><div id="cmpBox">
+  <h3 id="cmpTitle">Work time is over</h3>
+  <div id="cmpAsk"></div>
+  <div class="det" id="cmpDet"></div>
+  <div id="cmpStep1" class="row"><button type="button" class="ok" id="cmpDone">Complete</button><button type="button" class="go" id="cmpNot">Not complete</button></div>
+  <div id="cmpStep2" style="display:none">
+    <div>Still how much time do you need?</div>
+    <div style="margin-top:8px"><input type="number" id="cmpH" min="0" max="12" value="0"> hours <input type="number" id="cmpM" min="0" max="59" value="30" style="margin-left:8px"> minutes</div>
+    <div class="row"><button type="button" class="go" id="cmpSend">Submit to Control Office</button><button type="button" id="cmpBack">Back</button></div>
+  </div>
+  <div class="er" id="cmpErr"></div>
+</div></div>
+<div id="cmpNote"></div>
+<script>
+(function(){
+  var URL_PROMPTS = "{% url 'completion_prompts' %}", URL_DONE = "{% url 'worker_complete' 0 %}", URL_EXT = "{% url 'worker_request_extension' 0 %}";
+  var TOKEN = "{{ csrf_token }}", cur = null;
+  var bg = document.getElementById('cmpBg'), note = document.getElementById('cmpNote');
+  function $c(id){ return document.getElementById(id); }
+  function err(t){ var e = $c('cmpErr'); e.textContent = t || ''; e.style.display = t ? 'block' : 'none'; }
+  function post(u, extra){
+    var fd = new FormData(); fd.append('csrfmiddlewaretoken', TOKEN); fd.append('ajax', '1');
+    Object.keys(extra || {}).forEach(function(k){ fd.append(k, extra[k]); });
+    return fetch(u, {method:'POST', body:fd, credentials:'same-origin'}).then(function(r){ return r.json().then(function(j){ return {ok:r.ok, j:j}; }); });
+  }
+  function show(p){
+    cur = p; err('');
+    $c('cmpTitle').textContent = 'Work time is over \u2014 ' + p.code;
+    $c('cmpAsk').textContent = 'The planned end time (' + p.end + ') has passed. Is this asset complete or not?';
+    $c('cmpDet').textContent = p.details;
+    $c('cmpStep1').style.display = 'flex'; $c('cmpStep2').style.display = 'none';
+    bg.style.display = 'flex';
+  }
+  $c('cmpDone').onclick = function(){
+    var b = this; b.disabled = true;
+    post(URL_DONE.replace('/0/', '/' + cur.reqId + '/')).then(function(x){ if (x.ok && x.j.ok) location.reload(); else { b.disabled = false; err(x.j.error || 'Could not mark it complete.'); } })
+      .catch(function(){ b.disabled = false; err('Network error - try again.'); });
+  };
+  $c('cmpNot').onclick = function(){ err(''); $c('cmpStep1').style.display = 'none'; $c('cmpStep2').style.display = 'block'; };
+  $c('cmpBack').onclick = function(){ err(''); $c('cmpStep2').style.display = 'none'; $c('cmpStep1').style.display = 'flex'; };
+  $c('cmpSend').onclick = function(){
+    var mins = (parseInt($c('cmpH').value || '0', 10) * 60) + parseInt($c('cmpM').value || '0', 10);
+    if (!(mins >= 5)){ err('Write how much more time you need (at least 5 minutes).'); return; }
+    var b = this; b.disabled = true;
+    post(URL_EXT.replace('/0/', '/' + cur.reqId + '/'), {minutes: mins}).then(function(x){
+      b.disabled = false;
+      if (x.ok && x.j.ok){ bg.style.display = 'none'; cur = null; poll(); } else err(x.j.error || 'Could not send.');
+    }).catch(function(){ b.disabled = false; err('Network error - try again.'); });
+  };
+  function poll(){
+    fetch(URL_PROMPTS, {credentials:'same-origin'}).then(function(r){ return r.json(); }).then(function(j){
+      var pend = j.pending || [];
+      if (pend.length){ note.style.display = 'block'; note.textContent = 'Waiting for the Control Office: ' + pend.map(function(p){ return p.code + ' (+' + p.minutes + ' min)'; }).join(', '); }
+      else note.style.display = 'none';
+      if (bg.style.display === 'flex') return;          // already asking
+      if ((j.prompts || []).length) show(j.prompts[0]);
+    }).catch(function(){});
+  }
+  poll(); setInterval(poll, 30000);
+})();
+</script>
+</body>
+</html>

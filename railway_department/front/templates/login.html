@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | Railway Management System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:ital,wght@1,600;1,700;1,800&family=Nunito:ital,wght@1,600;1,700;1,800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Nunito', 'Noto Sans Devanagari', sans-serif; font-style: italic; }
+        body { min-height: 100vh; display: flex; justify-content: center; align-items: center; background: linear-gradient(135deg, #090a0f 0%, #161824 100%); padding: 40px 20px; color: #f8fafc; }
+        .clay-card { width: 100%; max-width: 460px; background: #181926; border-radius: 36px; padding: 42px 34px; border: 2px solid rgba(255, 255, 255, 0.08); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), inset 0 -10px 14px rgba(0, 0, 0, 0.7), inset 0 10px 14px rgba(255, 255, 255, 0.08); }
+        .clay-header { text-align: center; margin-bottom: 28px; }
+        .clay-header h2 { font-size: 24px; font-weight: 800; color: #f8fafc; }
+        .clay-header p { font-size: 14px; font-weight: 700; color: #a78bfa; margin-top: 4px; }
+        .alert-error { background-color: #2a1215; border: 1px solid #7f1d1d; color: #f87171; padding: 12px; border-radius: 18px; font-size: 13px; font-weight: 700; margin-bottom: 20px; text-align: center; }
+        .alert-success { background-color: #064e3b; border: 1px solid #047857; color: #34d399; padding: 12px; border-radius: 18px; font-size: 13px; font-weight: 700; margin-bottom: 20px; text-align: center; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-size: 13px; font-weight: 800; margin-bottom: 8px; color: #818cf8; }
+        .form-group label .hindi-word { color: #c084fc; margin-left: 4px; }
+        .form-group input { width: 100%; height: 48px; padding: 0 18px; background-color: #0f1019; border: 2px solid transparent; border-radius: 20px; color: #f1f5f9; font-size: 14px; font-weight: 700; outline: none; transition: all 0.25s ease; }
+        .form-group input:focus { background-color: #131422; border-color: #6366f1; }
+
+        .password-wrapper { position: relative; }
+        .password-wrapper input { padding-right: 48px; }
+        .toggle-eye { position: absolute; top: 50%; right: 16px; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; color: #818cf8; }
+        .toggle-eye svg { width: 20px; height: 20px; pointer-events: none; }
+        .toggle-eye .eye-off { display: none; }
+        .toggle-eye.is-visible .eye { display: none; }
+        .toggle-eye.is-visible .eye-off { display: block; }
+
+        .btn-group { display: flex; flex-direction: column; gap: 14px; margin-top: 10px; }
+        .btn-submit { width: 100%; height: 52px; background: #6366f1; border: none; border-radius: 22px; color: #ffffff; font-size: 15px; font-weight: 800; cursor: pointer; }
+        .btn-register { width: 100%; height: 52px; display: flex; justify-content: center; align-items: center; background: #272a3c; border-radius: 22px; color: #a78bfa; font-size: 14px; font-weight: 800; text-decoration: none; }
+    </style>
+</head>
+<body>
+
+    <div class="clay-card">
+        <div class="clay-header">
+            <h2>Sign In / <span style="color: #c084fc;">(साइन इन)</span></h2>
+            <p>Railway Management Portal</p>
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="{% if message.tags == 'success' %}alert-success{% else %}alert-error{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="POST" action="{% url 'login' %}" novalidate>
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="username">Username / <span class="hindi-word">(उपयोगकर्ता का नाम)</span></label>
+                <input type="text" id="username" name="username" placeholder="Enter registered username"
+                       value="{{ request.POST.username|default:'' }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password / <span class="hindi-word">(पासवर्ड)</span></label>
+                <div class="password-wrapper">
+                    <input type="password" id="password" name="password" placeholder="Enter password" required>
+                    <button type="button" class="toggle-eye" data-target="password" aria-label="Show password">
+                        <svg class="eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+                        <svg class="eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-7 0-11-7-11-7a18.5 18.5 0 0 1 5.06-5.94M9.9 4.24A10.94 10.94 0 0 1 12 4c7 0 11 7 11 7a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <button type="submit" class="btn-submit">Sign In / (साइन इन)</button>
+                <a href="{% url 'register' %}" class="btn-register">Register Account / (पंजीकरण करें)</a>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        document.querySelectorAll('.toggle-eye').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var input = document.getElementById(btn.dataset.target);
+                var showing = input.type === 'text';
+                input.type = showing ? 'password' : 'text';
+                btn.classList.toggle('is-visible', !showing);
+                btn.setAttribute('aria-label', showing ? 'Show password' : 'Hide password');
+            });
+        });
+    </script>
+</body>
+</html>

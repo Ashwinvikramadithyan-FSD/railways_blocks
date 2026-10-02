@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Live Train Tracking</title>
+<style>
+:root{
+  --bg:#0c0d0f; --panel:#17181b; --panel2:#1e2023; --line:#2b2d31;
+  --text:#f2f2f3; --muted:#93969c; --green:#22c55e; --red:#ef4444; --yellow:#eab308; --blue:#38bdf8;
+  --green-bg:rgba(34,197,94,.14); --red-bg:rgba(239,68,68,.14); --yellow-bg:rgba(234,179,8,.14); --blue-bg:rgba(56,189,248,.14);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+a{color:inherit}
+.app{display:flex;min-height:100vh}
+.sidebar{width:230px;flex:0 0 230px;background:#0a0b0c;border-right:1px solid var(--line);padding:18px 12px;
+  position:sticky;top:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column}
+.brand{display:flex;align-items:center;gap:10px;padding:4px 8px 18px;border-bottom:1px solid var(--line);margin-bottom:12px}
+.brand .dot{width:10px;height:10px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse 1.6s infinite}
+.brand-text b{display:block;font-size:14px}.brand-text span{display:block;font-size:11px;color:var(--muted)}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;color:var(--muted);font-size:13.5px;
+  cursor:pointer;margin-bottom:2px;border:1px solid transparent}
+.nav-item:hover{background:var(--panel2);color:var(--text)}
+.nav-item.active{background:var(--panel2);color:var(--text);border-color:var(--line)}
+.sidebar-foot{margin-top:auto;padding-top:14px;display:flex;flex-direction:column;gap:8px}
+.foot-link{display:block;text-align:center;font-size:12px;text-decoration:none;border:1px solid var(--line);padding:8px 10px;border-radius:8px}
+.foot-link:hover{background:var(--panel2)}
+.foot-link.red{color:var(--red)}
+.menu-btn{display:none;background:none;border:1px solid var(--line);color:var(--text);width:38px;height:38px;border-radius:8px;font-size:18px;cursor:pointer;flex-shrink:0;align-items:center;justify-content:center}
+.scrim{display:none}
+.main{flex:1;min-width:0;padding:22px 26px 60px}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px}
+.tb-left{display:flex;align-items:center;gap:12px}
+.topbar h1{font-size:19px;margin:0}.topbar .sub{color:var(--muted);font-size:12.5px;margin-top:3px}
+.live{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);background:var(--panel);border:1px solid var(--line);padding:6px 12px;border-radius:20px}
+.live .pulse{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 1.6s infinite}
+.live b{color:var(--text);font-variant-numeric:tabular-nums}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.cards{display:grid;grid-template-columns:repeat(7,1fr);gap:12px;margin-bottom:20px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px}
+.card .n{font-size:24px;font-weight:700}.card .l{font-size:11.5px;color:var(--muted);margin-top:2px}
+.card.g .n{color:var(--green)}.card.r .n{color:var(--red)}.card.y .n{color:var(--yellow)}.card.b .n{color:var(--blue)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:18px}
+.panel h2{font-size:15px;margin:0 0 12px}
+.panel-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px}
+.filters{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+select,input[type=text],input[type=datetime-local],input[type=search]{background:#0e0f11;border:1px solid var(--line);color:var(--text);padding:7px 10px;border-radius:7px;font-size:12.5px;font-family:inherit}
+label.chk{font-size:12.5px;color:var(--muted);display:flex;gap:6px;align-items:center;cursor:pointer}
+button{cursor:pointer;font-family:inherit}
+.btn{background:var(--panel2);border:1px solid var(--line);color:var(--text);padding:7px 12px;border-radius:7px;font-size:12.5px}
+.btn:hover{border-color:#3a3d42}.btn.primary{background:#fff;color:#0c0d0f;border-color:#fff;font-weight:600}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{text-align:left;color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.03em;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 10px;border-bottom:1px solid #202226;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr.now td{background:rgba(34,197,94,.08)}
+tr.past td{color:var(--muted)}
+.mono{font-variant-numeric:tabular-nums;white-space:nowrap}
+.muted{color:var(--muted)}.empty{color:var(--muted);text-align:center;padding:22px}
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap}
+.badge.green{background:var(--green-bg);color:var(--green)}.badge.red{background:var(--red-bg);color:var(--red)}
+.badge.yellow{background:var(--yellow-bg);color:var(--yellow)}.badge.blue{background:var(--blue-bg);color:var(--blue)}
+.badge.gray{background:var(--panel2);color:var(--muted)}
+.tno{font-weight:700;font-variant-numeric:tabular-nums}
+.tname{color:var(--muted);font-size:11.5px;margin-top:2px}
+.bar{height:6px;background:var(--panel2);border-radius:4px;overflow:hidden;min-width:90px}
+.bar i{display:block;height:100%;background:var(--green);border-radius:4px}
+.days{display:inline-flex;gap:3px}
+.days span{width:17px;height:17px;border-radius:4px;font-size:10px;display:flex;align-items:center;justify-content:center;background:var(--panel2);color:#55585e}
+.days span.on{background:var(--green-bg);color:var(--green);font-weight:700}
+.section{display:none}.section.active{display:block}
+.trainhead{display:flex;flex-wrap:wrap;gap:18px;align-items:center;margin-bottom:14px}
+.trainhead .big{font-size:17px;font-weight:700}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;align-items:end;margin-bottom:6px}
+.form-grid label{display:block;font-size:11.5px;color:var(--muted);margin-bottom:5px}
+.form-grid select,.form-grid input{width:100%}
+.msg{font-size:12.5px;margin-top:10px}.msg.ok{color:var(--green)}.msg.err{color:var(--red)}
+::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{background:#2c2e32;border-radius:4px}
+@media(max-width:1100px){.cards{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:760px){
+  .menu-btn{display:flex}
+  .sidebar{position:fixed;top:0;left:0;height:100%;width:250px;transform:translateX(-100%);transition:transform .25s ease;z-index:45;box-shadow:2px 0 24px rgba(0,0,0,.5)}
+  body.nav-open .sidebar{transform:translateX(0)}
+  body.nav-open .scrim{display:block;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:40}
+  .cards{grid-template-columns:repeat(2,1fr)}.main{padding:16px 14px 40px}.topbar h1{font-size:17px}
+}
+@media(max-width:420px){.cards{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><span class="dot"></span><div class="brand-text"><b>Train Tracking</b><span>Live detection · IST</span></div></div>
+    <div id="navList"></div>
+    <div class="sidebar-foot">
+      <a class="foot-link" href="{% url home_url_name %}">&larr; Back to my dashboard</a>
+      <a class="foot-link red" href="{% url 'logout' %}">Logout</a>
+    </div>
+  </aside>
+  <div class="scrim" id="scrim"></div>
+
+  <main class="main">
+    <div class="topbar">
+      <div class="tb-left">
+        <button class="menu-btn" id="menuBtn" aria-label="Open menu">&#9776;</button>
+        <div><h1 id="pageTitle">Live Trains</h1><div class="sub" id="pageSub"></div></div>
+      </div>
+      <div class="live"><span class="pulse"></span> Live &middot; <b id="clock">--:--:--</b> IST &middot; updated <span id="updated">now</span></div>
+    </div>
+
+    <div class="cards" id="summaryCards"></div>
+
+    <!-- LIVE TRAINS -->
+    <section class="section" id="sec-live">
+      <div class="panel">
+        <div class="panel-row">
+          <h2 style="margin:0">Where is my train &mdash; live positions</h2>
+          <div class="filters">
+            {% if can_record %}
+            <button class="btn" id="seedLoad" title="Adds 14 sample trains with timetables and detection history">Load sample data</button>
+            <button class="btn" id="seedClear" title="Removes only the sample trains (90001-90014)">Remove sample data</button>
+            {% endif %}
+            <input type="search" id="lvQ" placeholder="Search train no. / name / station">
+            <select id="lvSt">
+              <option value="">All statuses</option><option value="AT_STATION">At station</option><option value="RUNNING">Running</option>
+              <option value="LATE">Running late</option><option value="NOT_STARTED">Not started</option><option value="TERMINATED">Terminated</option>
+            </select>
+            <label class="chk"><input type="checkbox" id="lvToday"> Runs today only</label>
+          </div>
+        </div>
+        <div id="seedMsg" class="msg" style="margin:0 0 10px"></div>
+        <div style="overflow-x:auto"><table>
+          <thead><tr><th>Train</th><th>Type</th><th>Route</th><th>Current location</th><th>Next station</th><th>Delay</th><th>Platform</th><th>Progress</th><th>Last detected</th></tr></thead>
+          <tbody id="liveBody"></tbody></table></div>
+      </div>
+    </section>
+
+    <!-- STATION BOARD -->
+    <section class="section" id="sec-board">
+      <div class="panel">
+        <div class="panel-row">
+          <h2 style="margin:0">Station board &mdash; arrivals &amp; departures</h2>
+          <div class="filters"><select id="sbStn"></select><label class="chk"><input type="checkbox" id="sbToday"> Runs today only</label></div>
+        </div>
+        <div id="sbInfo" class="muted" style="font-size:12.5px;margin-bottom:10px"></div>
+        <div style="overflow-x:auto"><table>
+          <thead><tr><th>Train</th><th>Type</th><th>From &rarr; To</th><th>Sched. arr</th><th>Sched. dep</th><th>Expected / actual arr</th><th>Expected / actual dep</th><th>Delay</th><th>Platform</th><th>Status</th></tr></thead>
+          <tbody id="boardBody"></tbody></table></div>
+      </div>
+    </section>
+
+    <!-- SCHEDULE -->
+    <section class="section" id="sec-schedule">
+      <div class="panel">
+        <div class="panel-row">
+          <h2 style="margin:0">Train schedule</h2>
+          <div class="filters"><select id="scTr" style="min-width:260px"></select></div>
+        </div>
+        <div id="scHead" class="trainhead"></div>
+        <div style="overflow-x:auto"><table>
+          <thead><tr><th></th><th>#</th><th>Station</th><th>Sched. arr</th><th>Sched. dep</th><th>Halt</th><th>Actual arr</th><th>Actual dep</th><th>Delay</th><th>Platform</th><th>Distance</th><th>Day</th></tr></thead>
+          <tbody id="scBody"></tbody></table></div>
+      </div>
+    </section>
+
+    <!-- ALL TRAINS -->
+    <section class="section" id="sec-trains">
+      <div class="panel">
+        <div class="panel-row">
+          <h2 style="margin:0">All trains</h2>
+          <div class="filters"><input type="search" id="trQ" placeholder="Search train no. / name / station"></div>
+        </div>
+        <div style="overflow-x:auto"><table>
+          <thead><tr><th>Train</th><th>Type</th><th>From</th><th>To</th><th>Departs</th><th>Arrives</th><th>Distance</th><th>Stops</th><th>Runs on</th><th>Today</th></tr></thead>
+          <tbody id="trainsBody"></tbody></table></div>
+      </div>
+    </section>
+
+    <!-- DETECTION LOG -->
+    <section class="section" id="sec-log">
+      {% if can_record %}
+      <div class="panel">
+        <h2>Record a detection</h2>
+        <form id="detForm" onsubmit="return false">
+          {% csrf_token %}
+          <div class="form-grid">
+            <div><label>Train</label><select name="train_number" id="dfTrain"></select></div>
+            <div><label>Station</label><select name="station_code" id="dfStation"></select></div>
+            <div><label>Event</label><select name="event" id="dfEvent"><option value="ARRIVED">Arrived</option><option value="DEPARTED">Departed</option><option value="PASSED">Passed (non-stop)</option></select></div>
+            <div><label>Platform (optional)</label><input type="text" name="platform" id="dfPlat" maxlength="10"></div>
+            <div><label>Detected at (empty = now)</label><input type="datetime-local" name="detected_at" id="dfAt"></div>
+            <div><button class="btn primary" id="dfSubmit" style="width:100%">Save detection</button></div>
+          </div>
+          <div id="dfMsg" class="msg"></div>
+        </form>
+      </div>
+      {% endif %}
+      <div class="panel">
+        <div class="panel-row">
+          <h2 style="margin:0">Live detection log</h2>
+          <div class="filters"><select id="lgTr"></select></div>
+        </div>
+        <div style="overflow-x:auto"><table>
+          <thead><tr><th>Detected at</th><th>Train</th><th>Station</th><th>Event</th><th>Scheduled</th><th>Delay</th><th>Platform</th><th>Source</th></tr></thead>
+          <tbody id="logBody"></tbody></table></div>
+      </div>
+    </section>
+
+    <!-- STATIONS -->
+    <section class="section" id="sec-stations">
+      <div class="panel">
+        <h2>Stations</h2>
+        <div style="overflow-x:auto"><table>
+          <thead><tr><th>Code</th><th>Station</th><th>Division</th><th>Platforms</th><th>Trains on timetable</th><th>Trains at station now</th></tr></thead>
+          <tbody id="stationsBody"></tbody></table></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+{{ page_data|json_script:"page-data" }}
+<script>
+let P = JSON.parse(document.getElementById('page-data').textContent);
+const CAN_RECORD = {{ can_record|yesno:"true,false" }};
+const DATA_URL = "{% url 'train_data' %}";
+const DETECT_URL = "{% url 'train_detect' %}";
+const SEED_URL = "{% url 'train_seed' %}";
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const DAYS = ['M','T','W','T','F','S','S'];
+
+const NAV = [
+  {id:'live', label:'Live Trains', sub:'Real-time position of every train, updated from the detection system'},
+  {id:'board', label:'Station Board', sub:'Arrivals and departures at a station with expected times'},
+  {id:'schedule', label:'Train Schedule', sub:'Full timetable with the actual times detected so far'},
+  {id:'trains', label:'All Trains', sub:'Every train, its route, timings and running days'},
+  {id:'log', label:'Detection Log', sub:'Every detection reported by cameras, sensors or operators'},
+  {id:'stations', label:'Stations', sub:'Station list with platforms and trains currently present'}
+];
+let tab = 'live';
+
+/* ---------- formatting helpers (24-hour railway time, IST) ---------- */
+function istTime(iso, secs){
+  if(!iso) return '—';
+  return new Date(iso).toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit', second: secs ? '2-digit' : undefined, hour12:false, timeZone:'Asia/Kolkata'});
+}
+function istDateTime(iso){
+  if(!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-GB', {day:'2-digit', month:'short', timeZone:'Asia/Kolkata'}) + ' ' + istTime(iso);
+}
+function ago(iso){
+  if(!iso) return '—';
+  const m = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
+  if(m < 1) return 'just now';
+  if(m < 60) return m + ' min ago';
+  const h = Math.floor(m / 60);
+  return h < 24 ? h + ' h ' + (m % 60) + ' min ago' : Math.floor(h / 24) + ' d ago';
+}
+function shift(hhmm, add){          // "23:50" + 20 min -> {t:"00:10", d:1}
+  if(!hhmm) return null;
+  const [h, m] = hhmm.split(':').map(Number);
+  let tot = h * 60 + m + (add || 0), d = 0;
+  while(tot >= 1440){ tot -= 1440; d++; }
+  while(tot < 0){ tot += 1440; d--; }
+  return {t: String(Math.floor(tot / 60)).padStart(2,'0') + ':' + String(tot % 60).padStart(2,'0'), d};
+}
+function tstr(x){ return x ? x.t + (x.d > 0 ? ' <span class="muted">+' + x.d + 'd</span>' : '') : '—'; }
+function delayBadge(m, started){
+  if(!started) return '<span class="badge gray">—</span>';
+  if(m > 5) return '<span class="badge red">+' + m + ' min late</span>';
+  if(m < -1) return '<span class="badge blue">' + (-m) + ' min early</span>';
+  return '<span class="badge green">On time</span>';
+}
+function stateBadge(s){
+  return {AT_STATION:'<span class="badge green">At station</span>', RUNNING:'<span class="badge yellow">Running</span>',
+          NOT_STARTED:'<span class="badge gray">Not started</span>', TERMINATED:'<span class="badge blue">Terminated</span>',
+          CANCELLED:'<span class="badge red">Cancelled</span>'}[s] || esc(s);
+}
+function daysHtml(d){ return '<span class="days">' + DAYS.map((c,i)=>'<span class="' + (d[i]==='1'?'on':'') + '">' + c + '</span>').join('') + '</span>'; }
+function trainCell(t){ return '<div class="tno">' + esc(t.number) + '</div><div class="tname">' + esc(t.name) + '</div>'; }
+function started(t){ return t.live.state !== 'NOT_STARTED'; }
+function stopBy(t, seq){ return t.stops.find(s => s.seq === seq); }
+function nextStopOf(t){ return t.live.next ? t.stops.find(s => s.code === t.live.next.code) : null; }
+
+/* ---------- select helper that keeps the user's current choice on refresh ---------- */
+function fillSelect(el, opts, allLabel){
+  const keep = el.value;
+  el.innerHTML = (allLabel ? '<option value="">' + allLabel + '</option>' : '') +
+    opts.map(o => '<option value="' + esc(o.v) + '">' + esc(o.l) + '</option>').join('');
+  if([...el.options].some(o => o.value === keep)) el.value = keep;
+}
+
+/* ---------- navigation ---------- */
+function renderNav(){
+  $('navList').innerHTML = NAV.map(n => '<div class="nav-item ' + (n.id===tab?'active':'') + '" data-tab="' + n.id + '">' + n.label + '</div>').join('');
+  $('navList').querySelectorAll('.nav-item').forEach(el => el.addEventListener('click', () => { go(el.dataset.tab); document.body.classList.remove('nav-open'); }));
+}
+function go(t){
+  tab = t;
+  document.querySelectorAll('.section').forEach(s => s.classList.toggle('active', s.id === 'sec-' + t));
+  const n = NAV.find(x => x.id === t);
+  $('pageTitle').textContent = n.label; $('pageSub').textContent = n.sub;
+  renderNav(); history.replaceState(null, '', '#' + t);
+}
+$('menuBtn').addEventListener('click', () => document.body.classList.add('nav-open'));
+$('scrim').addEventListener('click', () => document.body.classList.remove('nav-open'));
+
+/* ---------- summary cards ---------- */
+function renderCards(){
+  const T = P.trains;
+  const at = T.filter(t => t.live.state === 'AT_STATION').length;
+  const run = T.filter(t => t.live.state === 'RUNNING').length;
+  const late = T.filter(t => (t.live.state === 'RUNNING' || t.live.state === 'AT_STATION') && t.live.delay > 5).length;
+  const ok = T.filter(t => (t.live.state === 'RUNNING' || t.live.state === 'AT_STATION') && t.live.delay <= 5).length;
+  const ns = T.filter(t => t.live.state === 'NOT_STARTED').length;
+  const term = T.filter(t => t.live.state === 'TERMINATED').length;
+  const cards = [
+    {n:T.length, l:'Trains tracked'}, {n:run, l:'Running between stations', c:'y'}, {n:at, l:'At a station now', c:'g'},
+    {n:ok, l:'On time / early', c:'g'}, {n:late, l:'Running late', c:'r'}, {n:ns, l:'Not started'}, {n:term, l:'Reached destination', c:'b'}
+  ];
+  $('summaryCards').innerHTML = cards.map(c => '<div class="card ' + (c.c||'') + '"><div class="n">' + c.n + '</div><div class="l">' + c.l + '</div></div>').join('');
+}
+
+/* ---------- live trains ---------- */
+const ORDER = {AT_STATION:0, RUNNING:1, NOT_STARTED:2, TERMINATED:3, CANCELLED:4};
+function renderLive(){
+  const q = $('lvQ').value.trim().toLowerCase(), st = $('lvSt').value, today = $('lvToday').checked;
+  let rows = P.trains.filter(t => {
+    if(today && !t.runsToday) return false;
+    if(st === 'LATE'){ if(!((t.live.state==='RUNNING'||t.live.state==='AT_STATION') && t.live.delay > 5)) return false; }
+    else if(st && t.live.state !== st) return false;
+    if(q){
+      const hay = (t.number + ' ' + t.name + ' ' + t.from + ' ' + t.to + ' ' + t.stops.map(s => s.station + ' ' + s.code).join(' ')).toLowerCase();
+      if(!hay.includes(q)) return false;
+    }
+    return true;
+  }).sort((a,b) => (ORDER[a.live.state] - ORDER[b.live.state]) || a.number.localeCompare(b.number));
+
+  $('liveBody').innerHTML = rows.map(t => {
+    const l = t.live, cur = l.cur, nx = nextStopOf(t);
+    let where;
+    if(l.state === 'AT_STATION') where = '<span class="badge green">At station</span> <b>' + esc(cur.name) + '</b>';
+    else if(l.state === 'RUNNING') where = '<span class="badge yellow">Running</span> left <b>' + esc(cur ? cur.name : '—') + '</b>';
+    else if(l.state === 'TERMINATED') where = '<span class="badge blue">Reached</span> <b>' + esc(t.to) + '</b>';
+    else if(l.state === 'CANCELLED') where = '<span class="badge red">Cancelled</span>';
+    else where = '<span class="badge gray">Not started</span> yet to leave <b>' + esc(t.from) + '</b>';
+    let next = '—';
+    if(nx && l.state !== 'TERMINATED'){
+      const sched = nx.arr || nx.dep;
+      const exp = started(t) ? shift(sched, l.delay) : shift(sched, 0);
+      next = '<b>' + esc(nx.station) + '</b><div class="tname">' + (started(t) ? 'expected ' : 'scheduled ') + tstr(exp) + '</div>';
+    }
+    return '<tr><td>' + trainCell(t) + '</td><td>' + esc(t.type) + '</td><td>' + esc(t.fromCode) + ' &rarr; ' + esc(t.toCode) +
+      '</td><td>' + where + '</td><td>' + next + '</td><td>' + delayBadge(l.delay, started(t) && l.state !== 'CANCELLED') +
+      '</td><td class="mono">' + esc(l.platform || '—') + '</td><td><div class="bar"><i style="width:' + l.progress + '%"></i></div><div class="tname">' + l.progress + '% of ' + t.km + ' km</div></td>' +
+      '<td class="mono">' + (l.detectedAt ? istTime(l.detectedAt) + '<div class="tname">' + ago(l.detectedAt) + '</div>' : '—') + '</td></tr>';
+  }).join('') || '<tr><td colspan="9" class="empty">No trains yet. A Control / Station / Division user can click <b>Load sample data</b> above, or trains can be added in the admin site (/admin/).</td></tr>';
+}
+
+/* ---------- station board ---------- */
+function renderBoard(){
+  fillSelect($('sbStn'), P.stations.map(s => ({v:s.code, l:s.name + ' (' + s.code + ')'})));
+  const code = $('sbStn').value, today = $('sbToday').checked;
+  const stn = P.stations.find(s => s.code === code);
+  $('sbInfo').textContent = stn ? stn.name + ' · ' + (stn.division || 'no division set') + ' · ' + stn.platforms + ' platform(s)' : 'No stations yet.';
+  const rows = [];
+  P.trains.forEach(t => {
+    if(today && !t.runsToday) return;
+    const s = t.stops.find(x => x.code === code);
+    if(!s) return;
+    const l = t.live, begun = started(t);
+    let status, expArr, expDep, shownDelay = l.delay;
+    const eArr = s.actArr ? {t:s.actArr, d:s.day} : (s.arr ? shift(s.arr, begun ? l.delay : 0) : null);
+    const eDep = s.actDep ? {t:s.actDep, d:s.day} : (s.dep ? shift(s.dep, begun ? l.delay : 0) : null);
+    expArr = (s.actArr ? '<b>' + tstr(eArr) + '</b> <span class="muted">actual</span>' : tstr(eArr));
+    expDep = (s.actDep ? '<b>' + tstr(eDep) + '</b> <span class="muted">actual</span>' : tstr(eDep));
+    if(l.state === 'CANCELLED') status = '<span class="badge red">Cancelled</span>';
+    else if(!begun) status = '<span class="badge gray">Yet to start</span>';
+    else if(l.seq === s.seq && l.state === 'AT_STATION') status = '<span class="badge green">At platform</span>';
+    else if(l.seq > s.seq || (l.seq === s.seq)) status = s.passed ? '<span class="badge blue">Passed</span>' : '<span class="badge blue">Departed</span>';
+    else status = '<span class="badge yellow">Expected</span>';
+    if(l.seq >= s.seq){ const d = s.actDep != null ? s.depDelay : s.arrDelay; if(d != null) shownDelay = d; }
+    const key = ((s.day || 0) * 1440) + (((s.arr || s.dep || '00:00').split(':')[0]) * 60) + Number((s.arr || s.dep || '00:00').split(':')[1]);
+    rows.push({key, html:'<tr><td>' + trainCell(t) + '</td><td>' + esc(t.type) + '</td><td>' + esc(t.fromCode) + ' &rarr; ' + esc(t.toCode) +
+      '</td><td class="mono">' + esc(s.arr || '—') + '</td><td class="mono">' + esc(s.dep || '—') + '</td><td class="mono">' + expArr +
+      '</td><td class="mono">' + expDep + '</td><td>' + delayBadge(shownDelay, begun && l.state !== 'CANCELLED') +
+      '</td><td class="mono">' + esc((l.seq === s.seq && l.platform) ? l.platform : (s.plat || '—')) + '</td><td>' + status + '</td></tr>'});
+  });
+  rows.sort((a,b) => a.key - b.key);
+  $('boardBody').innerHTML = rows.map(r => r.html).join('') || '<tr><td colspan="10" class="empty">No trains on the timetable for this station.</td></tr>';
+}
+
+/* ---------- schedule ---------- */
+function renderSchedule(){
+  fillSelect($('scTr'), P.trains.map(t => ({v:t.number, l:t.number + ' — ' + t.name})));
+  const t = P.trains.find(x => x.number === $('scTr').value);
+  if(!t){ $('scHead').innerHTML = ''; $('scBody').innerHTML = '<tr><td colspan="12" class="empty">No trains yet.</td></tr>'; return; }
+  const l = t.live;
+  $('scHead').innerHTML = '<div><div class="big">' + esc(t.number) + ' · ' + esc(t.name) + '</div><div class="tname">' + esc(t.type) + ' · ' + esc(t.from) + ' &rarr; ' + esc(t.to) + ' · ' + t.km + ' km</div></div>' +
+    '<div>' + daysHtml(t.days) + '</div><div>' + stateBadge(l.state) + ' ' + delayBadge(l.delay, started(t)) + '</div>' +
+    '<div class="muted" style="font-size:12.5px">' + (l.cur ? (l.state === 'AT_STATION' ? 'At ' : 'Last seen at ') + '<b style="color:var(--text)">' + esc(l.cur.name) + '</b> · ' + ago(l.detectedAt) : 'No detection yet') + '</div>';
+  $('scBody').innerHTML = t.stops.map((s, i) => {
+    let cls = '', dot = '';
+    if(started(t) && l.seq != null){
+      if(s.seq < l.seq) cls = 'past';
+      if(s.seq === l.seq){ cls = 'now'; dot = l.state === 'AT_STATION' ? '🚆' : '➜'; }
+    }
+    const halt = (s.arr && s.dep) ? ((h) => h < 0 ? h + 1440 : h)((Number(s.dep.slice(0,2)) * 60 + Number(s.dep.slice(3))) - (Number(s.arr.slice(0,2)) * 60 + Number(s.arr.slice(3)))) + ' min' : '—';
+    const dl = s.depDelay != null ? s.depDelay : s.arrDelay;
+    return '<tr class="' + cls + '"><td>' + dot + '</td><td>' + s.seq + '</td><td><b>' + esc(s.station) + '</b> <span class="muted">' + esc(s.code) + '</span></td>' +
+      '<td class="mono">' + esc(s.arr || '—') + '</td><td class="mono">' + esc(s.dep || '—') + '</td><td class="mono">' + halt + '</td>' +
+      '<td class="mono">' + esc(s.actArr || (s.passed ? '' : '—')) + '</td><td class="mono">' + esc(s.actDep || '—') + '</td>' +
+      '<td>' + (dl != null ? delayBadge(dl, true) : '<span class="muted">—</span>') + '</td><td class="mono">' + esc(s.plat || '—') + '</td>' +
+      '<td class="mono">' + s.km + ' km</td><td class="mono">Day ' + (s.day + 1) + '</td></tr>';
+  }).join('');
+}
+
+/* ---------- all trains ---------- */
+function renderTrains(){
+  const q = $('trQ').value.trim().toLowerCase();
+  const rows = P.trains.filter(t => !q || (t.number + ' ' + t.name + ' ' + t.stops.map(s => s.station + ' ' + s.code).join(' ')).toLowerCase().includes(q));
+  $('trainsBody').innerHTML = rows.map(t => {
+    const f = t.stops[0], z = t.stops[t.stops.length - 1];
+    return '<tr><td>' + trainCell(t) + '</td><td>' + esc(t.type) + '</td><td>' + esc(t.from) + '</td><td>' + esc(t.to) + '</td><td class="mono">' + esc(f ? f.dep : '—') +
+      '</td><td class="mono">' + esc(z ? z.arr : '—') + (z && z.day ? ' <span class="muted">+' + z.day + 'd</span>' : '') + '</td><td class="mono">' + t.km + ' km</td><td>' + t.stops.length +
+      '</td><td>' + daysHtml(t.days) + '</td><td>' + (t.runsToday ? '<span class="badge green">Runs today</span>' : '<span class="badge gray">Not today</span>') + '</td></tr>';
+  }).join('') || '<tr><td colspan="10" class="empty">No trains found.</td></tr>';
+}
+
+/* ---------- detection log ---------- */
+function renderLog(){
+  fillSelect($('lgTr'), P.trains.map(t => ({v:t.number, l:t.number + ' — ' + t.name})), 'All trains');
+  const f = $('lgTr').value;
+  const evCls = {ARRIVED:'green', DEPARTED:'yellow', PASSED:'blue'};
+  const rows = P.events.filter(e => !f || e.train === f);
+  $('logBody').innerHTML = rows.map(e =>
+    '<tr><td class="mono">' + istDateTime(e.at) + '</td><td><div class="tno">' + esc(e.train) + '</div><div class="tname">' + esc(e.trainName) + '</div></td>' +
+    '<td>' + esc(e.station) + ' <span class="muted">' + esc(e.code) + '</span></td><td><span class="badge ' + evCls[e.event] + '">' + esc(e.event.toLowerCase()) + '</span></td>' +
+    '<td class="mono">' + (e.sched ? istTime(e.sched) : '—') + '</td><td>' + delayBadge(e.delay, true) + '</td><td class="mono">' + esc(e.plat || '—') + '</td><td>' + esc(e.source || '—') + '</td></tr>'
+  ).join('') || '<tr><td colspan="8" class="empty">No detections recorded yet.</td></tr>';
+  if(CAN_RECORD) renderForm();
+}
+function renderForm(){
+  fillSelect($('dfTrain'), P.trains.map(t => ({v:t.number, l:t.number + ' — ' + t.name})));
+  const t = P.trains.find(x => x.number === $('dfTrain').value);
+  fillSelect($('dfStation'), t ? t.stops.map(s => ({v:s.code, l:s.seq + '. ' + s.station + ' (' + s.code + ')'})) : []);
+}
+if(CAN_RECORD){
+  $('dfTrain').addEventListener('change', renderForm);
+  $('dfSubmit').addEventListener('click', () => {
+    const fd = new FormData($('detForm')), msg = $('dfMsg');
+    msg.className = 'msg'; msg.textContent = 'Saving…';
+    fetch(DETECT_URL, {method:'POST', body:fd, credentials:'same-origin'})
+      .then(r => r.json().then(j => ({ok:r.ok, j})))
+      .then(({ok, j}) => {
+        if(ok && j.ok){ msg.className = 'msg ok'; msg.textContent = 'Saved. Delay ' + j.delay_minutes + ' min.'; $('dfAt').value = ''; if($('dfAt')._flatpickr) $('dfAt')._flatpickr.clear(); refresh(); }
+        else { msg.className = 'msg err'; msg.textContent = j.error || 'Could not save the detection.'; }
+      })
+      .catch(() => { msg.className = 'msg err'; msg.textContent = 'Network error — try again.'; });
+  });
+}
+
+/* ---------- sample data buttons ---------- */
+if(CAN_RECORD){
+  const csrf = () => (document.querySelector('[name=csrfmiddlewaretoken]') || {}).value || '';
+  const seed = action => {
+    const msg = $('seedMsg');
+    if(action === 'clear' && !confirm('Remove the sample trains (90001-90014) and their detection history?')) return;
+    msg.className = 'msg'; msg.textContent = action === 'clear' ? 'Removing…' : 'Loading sample data…';
+    const fd = new FormData(); fd.append('action', action);
+    fetch(SEED_URL, {method:'POST', body:fd, credentials:'same-origin', headers:{'X-CSRFToken': csrf()}})
+      .then(r => r.json().then(j => ({ok:r.ok, j})))
+      .then(({ok, j}) => { msg.className = 'msg ' + (ok && j.ok ? 'ok' : 'err'); msg.textContent = j.message || j.error || 'Done.'; if(ok) refresh(); })
+      .catch(() => { msg.className = 'msg err'; msg.textContent = 'Network error — try again.'; });
+  };
+  $('seedLoad').addEventListener('click', () => seed('load'));
+  $('seedClear').addEventListener('click', () => seed('clear'));
+}
+
+/* ---------- stations ---------- */
+function renderStations(){
+  $('stationsBody').innerHTML = P.stations.map(s => {
+    const on = P.trains.filter(t => t.stops.some(x => x.code === s.code));
+    const here = P.trains.filter(t => t.live.state === 'AT_STATION' && t.live.cur && t.live.cur.code === s.code);
+    return '<tr><td class="mono"><b>' + esc(s.code) + '</b></td><td>' + esc(s.name) + '</td><td>' + esc(s.division || '—') + '</td><td>' + s.platforms + '</td><td>' + on.length +
+      '</td><td>' + (here.length ? here.map(t => '<span class="badge green">' + esc(t.number) + '</span>').join(' ') : '<span class="muted">—</span>') + '</td></tr>';
+  }).join('') || '<tr><td colspan="6" class="empty">No stations yet.</td></tr>';
+}
+
+function renderAll(){ renderCards(); renderLive(); renderBoard(); renderSchedule(); renderTrains(); renderLog(); renderStations(); }
+
+/* ---------- live refresh ---------- */
+let lastOk = Date.now();
+function refresh(){
+  return fetch(DATA_URL, {credentials:'same-origin', headers:{'Accept':'application/json'}})
+    .then(r => { if(!r.ok) throw new Error('bad'); return r.json(); })
+    .then(j => { P = j; lastOk = Date.now(); renderAll(); })
+    .catch(() => {});
+}
+['lvQ','lvSt','lvToday'].forEach(i => $(i).addEventListener('input', renderLive));
+['sbStn','sbToday'].forEach(i => $(i).addEventListener('input', renderBoard));
+$('scTr').addEventListener('input', renderSchedule);
+$('trQ').addEventListener('input', renderTrains);
+$('lgTr').addEventListener('input', renderLog);
+setInterval(refresh, 10000);
+setInterval(() => {
+  $('clock').textContent = new Date().toLocaleTimeString('en-GB', {hour12:false, timeZone:'Asia/Kolkata'});
+  const s = Math.round((Date.now() - lastOk) / 1000);
+  $('updated').textContent = s < 5 ? 'just now' : s + ' s ago';
+}, 1000);
+
+renderNav();
+renderAll();
+const start = (location.hash || '#live').slice(1);
+go(NAV.some(n => n.id === start) ? start : 'live');
+</script>
+{% include '_datepicker.html' %}
+</body>
+</html>

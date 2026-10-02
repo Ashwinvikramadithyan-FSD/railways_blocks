@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Worker Dashboard</title>
+<style>
+:root{
+  --bg:#0c0d0f; --panel:#17181b; --panel2:#1e2023; --line:#2a2c30;
+  --text:#f5f5f6; --muted:#9a9da3; --green:#22c55e; --red:#ef4444; --yellow:#eab308;
+  --green-bg:rgba(34,197,94,.15); --red-bg:rgba(239,68,68,.15); --yellow-bg:rgba(234,179,8,.15);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidden;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);}
+button{font-family:inherit;cursor:pointer}
+.app{display:flex;flex:1 1 auto;min-height:0}
+.sidebar{width:220px;flex:0 0 220px;background:#0a0b0c;border-right:1px solid var(--line);
+  padding:18px 12px;overflow-y:auto;display:none;flex-direction:column}
+.scrim{display:none}
+.menu-btn{display:none;background:none;border:1px solid var(--line);color:var(--text);
+  width:38px;height:38px;border-radius:8px;font-size:18px;cursor:pointer;flex-shrink:0;
+  align-items:center;justify-content:center}
+.brand{display:flex;align-items:center;gap:10px;padding:4px 8px 16px;border-bottom:1px solid var(--line);margin-bottom:10px}
+.brand .dot{width:10px;height:10px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green)}
+.brand-text b{display:block;font-size:14px}
+.brand-text span{display:block;font-size:11px;color:var(--muted)}
+.nav-item{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:8px;color:var(--muted);
+  font-size:13.5px;cursor:pointer;margin-bottom:2px}
+.nav-item svg{width:17px;height:17px;flex:0 0 17px}
+.nav-item:hover{background:var(--panel2);color:var(--text)}
+.nav-item.active{background:var(--panel2);color:var(--text)}
+.sidebar-nav{flex:1}
+.sidebar-foot{padding-top:14px;border-top:1px solid var(--line);margin-top:10px}
+.logout-link{display:block;color:var(--red);font-size:12px;text-decoration:none;border:1px solid var(--line);padding:8px 10px;border-radius:8px;text-align:center}
+.logout-link:hover{background:var(--red-bg)}
+.main{flex:1;min-width:0;padding:16px 16px 24px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.topbar{
+  position:-webkit-sticky;position:sticky;top:0;top:env(safe-area-inset-top,0px);z-index:20;
+  background:var(--bg);margin:0 -16px 14px;padding:12px 16px;
+  display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--line);
+}
+.topbar h1{font-size:19px;margin:0}
+.topbar .sub{color:var(--muted);font-size:12.5px;margin-top:2px}
+.cards{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:18px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
+.card .n{font-size:22px;font-weight:700}
+.card .l{font-size:11px;color:var(--muted);margin-top:2px}
+.card.g .n{color:var(--green)} .card.r .n{color:var(--red)} .card.y .n{color:var(--yellow)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:16px}
+.panel h2{font-size:15px;margin:0 0 12px}
+.section{display:none}
+.section.active{display:block}
+.work-card{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px;position:relative}
+.work-card .row{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px}
+.row-right{display:flex;align-items:center;gap:8px}
+.work-card .wid{font-weight:700;font-size:13.5px;font-variant-numeric:tabular-nums}
+.work-card .title{font-size:14.5px;font-weight:600;margin-bottom:6px}
+.meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;font-size:12.5px;color:var(--muted);margin-bottom:8px}
+.meta-grid b{color:var(--text);font-weight:500;display:block}
+.badge{display:inline-block;padding:4px 10px;border-radius:20px;font-size:11.5px;font-weight:600;white-space:nowrap}
+.badge.green{background:var(--green-bg);color:var(--green)}
+.badge.red{background:var(--red-bg);color:var(--red)}
+.badge.yellow{background:var(--yellow-bg);color:var(--yellow)}
+.badge.grey{background:#2a2c30;color:var(--muted)}
+.card-x{width:26px;height:26px;flex:0 0 26px;border-radius:50%;background:var(--panel);border:1px solid var(--line);
+  color:var(--muted);display:flex;align-items:center;justify-content:center;font-size:16px;line-height:1}
+.card-x:hover{background:var(--red-bg);color:var(--red);border-color:var(--red)}
+.actions{display:flex;gap:10px;margin-top:10px}
+.btn{border-radius:10px;padding:13px 14px;font-size:14px;font-weight:600;border:1px solid var(--line);
+  background:var(--panel);color:var(--text);flex:1;min-height:46px}
+.btn.accept{background:var(--green-bg);border-color:var(--green);color:var(--green)}
+.btn.reject{background:var(--red-bg);border-color:var(--red);color:var(--red)}
+.btn.primary{background:#fff;color:#0c0d0f;border-color:#fff}
+.btn.full{width:100%}
+.given-time{font-size:12px;color:var(--muted);margin-top:6px}
+.flow{display:flex;flex-direction:column;align-items:flex-start;gap:0;margin:6px 0 10px}
+.flow-step{display:flex;align-items:center;gap:10px;padding:6px 0}
+.flow-arrow{color:var(--muted);font-size:14px;padding-left:13px;line-height:1}
+.flow-label{font-size:13px;min-width:118px}
+.sched-compare{display:flex;gap:10px;margin:8px 0}
+.sched-box{flex:1;background:#151619;border:1px solid var(--line);border-radius:10px;padding:10px}
+.sched-box .k{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;margin-bottom:4px}
+.sched-box .v{font-size:13px;font-weight:600}
+.chat-tabs{display:flex;gap:8px;margin-bottom:10px;overflow-x:auto;padding-bottom:2px}
+.chat-tab{padding:9px 14px;border-radius:20px;background:var(--panel2);font-size:12.5px;white-space:nowrap;border:1px solid transparent}
+.chat-tab.active{border-color:var(--line);background:#24262a}
+.msgs{display:flex;flex-direction:column;gap:8px;max-height:340px;overflow-y:auto;padding:4px 2px;margin-bottom:10px}
+.msg{max-width:78%;padding:9px 12px;border-radius:12px;font-size:13px;line-height:1.4}
+.msg.in{background:var(--panel2);align-self:flex-start}
+.msg.out{background:#243a2b;align-self:flex-end}
+.msg .meta{display:block;color:var(--muted);font-size:10px;margin-top:3px}
+.chat-input{display:flex;gap:8px}
+.chat-input input{flex:1;background:#0e0f11;border:1px solid var(--line);color:var(--text);padding:12px;border-radius:10px;font-size:13.5px}
+.profile-head{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+.avatar{width:56px;height:56px;border-radius:50%;background:var(--panel2);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;border:1px solid var(--line)}
+.profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.profile-item .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;margin-bottom:3px}
+.profile-item .v{font-size:14px;font-weight:600}
+.empty{color:var(--muted);font-size:13px;text-align:center;padding:24px 10px}
+.new-req-form{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.new-req-form input{background:#0e0f11;border:1px solid var(--line);color:var(--text);padding:10px;border-radius:8px;font-size:13px}
+.new-req-form input.full{grid-column:1/-1}
+.new-req-form select{background:#0e0f11;border:1px solid var(--line);color:var(--text);padding:10px;border-radius:8px;font-size:13px;color-scheme:dark;width:100%;min-width:0}
+.new-req-form select:disabled{opacity:.5;cursor:not-allowed}
+.new-req-form input{min-width:0;width:100%}
+.form-sec{grid-column:1/-1;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;
+  border-bottom:1px solid var(--line);padding-bottom:4px;margin-top:6px}
+.form-sec:first-child{margin-top:0}
+.duration-note{grid-column:1/-1;background:#0e0f11;border:1px dashed var(--line);border-radius:8px;padding:10px;font-size:13px;color:var(--muted)}
+.duration-note b{color:var(--green);font-size:14px}
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--line);border-radius:10px}
+.req-table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:1160px}
+.req-table th{text-align:left;color:var(--muted);font-weight:600;font-size:10.5px;text-transform:uppercase;letter-spacing:.03em;
+  padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap;background:var(--panel2)}
+.req-table td{padding:10px;border-bottom:1px solid #202226;vertical-align:middle;white-space:nowrap}
+.req-table tr:last-child td{border-bottom:none}
+.req-table td.mono{font-variant-numeric:tabular-nums;color:var(--muted)}
+.req-table td.wr{font-weight:700}
+.req-table th.status-col,.req-table td.status-col{text-align:right}
+.req-table td.status-col .badge{margin-right:6px}
+.req-table td.status-col .card-x{display:inline-flex;vertical-align:middle}
+.profile-clock{grid-column:1/-1;background:#0e0f11;border:1px solid var(--line);border-radius:10px;padding:12px 14px;
+  display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.profile-clock .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+.profile-clock .t{font-size:26px;font-weight:700;color:var(--green);font-variant-numeric:tabular-nums;letter-spacing:.04em}
+.profile-clock .d{font-size:12px;color:var(--muted);margin-top:2px}
+@media(max-width:899px){
+  .menu-btn{display:flex}
+  .sidebar{display:flex;position:fixed;top:0;left:0;height:100%;width:260px;
+    padding-top:calc(18px + env(safe-area-inset-top,0px));
+    padding-bottom:calc(18px + env(safe-area-inset-bottom,0px));
+    transform:translateX(-100%);transition:transform .25s ease;z-index:50;
+    box-shadow:2px 0 24px rgba(0,0,0,.5)}
+  body.nav-open .sidebar{transform:translateX(0)}
+  body.nav-open .scrim{display:block;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:45}
+}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:50;padding:16px}
+.modal-box{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;width:100%;max-width:400px}
+.modal-box h3{margin:0 0 4px;font-size:15px}
+.modal-box .modal-sub{color:var(--muted);font-size:12px;margin:0 0 12px}
+.modal-box textarea{width:100%;background:#0e0f11;border:1px solid var(--line);color:var(--text);padding:10px;border-radius:10px;font-size:13.5px;font-family:inherit;resize:vertical;margin-bottom:12px}
+@media(min-width:900px){
+  .sidebar{display:flex}
+  .main{padding:24px 40px 40px;max-width:1600px;margin:0 auto;width:100%}
+  .cards{grid-template-columns:repeat(4,1fr)}
+  .topbar{margin:0 -40px 14px;padding:16px 40px}
+}
+@media(min-width:1400px){.cards{grid-template-columns:repeat(6,1fr)}}
+@media(max-width:420px){
+  .main{padding:12px 12px 16px}
+  .topbar{margin:0 -12px 14px;padding:10px 12px}
+  .topbar h1{font-size:17px}
+  .cards{gap:8px}
+  .card{padding:11px}
+  .card .n{font-size:19px}
+  .panel{padding:12px}
+  .work-card{padding:12px}
+  .meta-grid{grid-template-columns:1fr;gap:6px}
+  .flow-label{min-width:100px;font-size:12.5px}
+  .actions{flex-direction:column}
+  .btn{width:100%}
+  .sched-compare{flex-direction:column}
+  .chat-input input{padding:11px;font-size:13px}
+  .msg{max-width:88%}
+  .modal-box{padding:14px}
+  .new-req-form{grid-template-columns:1fr}
+}
+@media(max-width:340px){.cards{grid-template-columns:1fr}}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-thumb{background:#2c2e32;border-radius:4px}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand"><span class="dot"></span>
+      <div class="brand-text"><b>Worker Dashboard</b><span>{{ profile.user.username }} &middot; Live</span></div>
+    </div>
+    <div class="sidebar-nav" id="navList"></div>
+    <a href="{% url 'train_dashboard' %}" style="display:block;margin:10px 0 0;padding:9px 12px;border:1px solid var(--line);border-radius:8px;color:inherit;text-decoration:none;font-size:13px;text-align:center">&#128646; Live Train Tracking</a>
+    <div class="sidebar-foot"><a class="logout-link" href="{% url 'logout' %}">Logout</a></div>
+  </aside>
+  <div class="scrim" id="scrim"></div>
+
+  <main class="main">
+    <div class="topbar">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu">&#9776;</button>
+      <div class="tb-title">
+        <h1 id="pageTitle">Dashboard</h1>
+        <div class="sub" id="pageSub">Your assigned maintenance work, at a glance</div>
+      </div>
+    </div>
+
+    {% if messages %}{% for m in messages %}<div class="panel" style="border-color:var(--green)">{{ m }}</div>{% endfor %}{% endif %}
+
+    <div class="cards" id="summaryCards"></div>
+
+    <section class="section" id="sec-dashboard">
+      <div class="panel">
+        <h2>Needs Your Response</h2>
+        <div id="pendingResponsePreview"></div>
+      </div>
+    </section>
+
+    <section class="section" id="sec-requests">
+      <div class="panel">
+        <button class="btn primary full" type="button" id="openAddAssetBtn">+ Add Asset</button>
+      </div>
+      <div class="panel">
+        <h2>My Work Requests</h2>
+        <div id="requestsList"></div>
+      </div>
+    </section>
+
+    <section class="section" id="sec-approvals">
+      <div class="panel">
+        <h2>Approval Status</h2>
+        <div id="approvalsList"></div>
+      </div>
+    </section>
+
+    <section class="section" id="sec-mywork">
+      <div class="panel">
+        <h2>Awaiting Your Response</h2>
+        <div id="acceptanceList"></div>
+      </div>
+      <div class="panel">
+        <h2>Current Works</h2>
+        <div id="currentList"></div>
+      </div>
+    </section>
+
+    <section class="section" id="sec-reschedule">
+      <div class="panel">
+        <h2>Reschedule</h2>
+        <div id="rescheduleList"></div>
+      </div>
+    </section>
+
+    <section class="section" id="sec-completed">
+      <div class="panel">
+        <h2>Completed Works</h2>
+        <div id="completedList"></div>
+      </div>
+    </section>
+
+    <section class="section" id="sec-comm">
+      <div class="panel">
+        <h2>Communication</h2>
+        <div class="chat-tabs" id="chatTabs"></div>
+        <div class="msgs" id="chatMsgs"></div>
+        <div class="chat-input">
+          <input type="text" id="chatInput" placeholder="Message the officer...">
+          <button class="btn primary" id="chatSend" style="flex:0 0 auto">Send</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="sec-profile">
+      <div class="panel">
+        <div class="profile-head">
+          <div class="avatar">{{ profile.user.username|slice:":2"|upper }}</div>
+          <div>
+            <div style="font-size:16px;font-weight:700">{{ profile.user.username }}</div>
+            <div style="color:var(--muted);font-size:12.5px">{{ profile.get_department_display }}</div>
+          </div>
+        </div>
+        <div class="profile-grid">
+          <div class="profile-item"><div class="k">Name</div><div class="v">{{ profile.user.username }}</div></div>
+          <div class="profile-item"><div class="k">Department</div><div class="v">{% if profile.work_department %}{{ profile.work_department }} ({{ profile.get_department_display }}){% else %}{{ profile.get_department_display }}{% endif %}</div></div>
+          <div class="profile-item"><div class="k">Phone Number</div><div class="v">{{ profile.phone_number|default:"Not set" }}</div></div>
+          <div class="profile-item"><div class="k">Email ID</div><div class="v" style="word-break:break-all">{{ profile.user.email|default:"Not set" }}</div></div>
+          <div class="profile-item"><div class="k">Member Since</div><div class="v">{{ profile.user.date_joined|date:"d M Y" }}</div></div>
+          <div class="profile-clock">
+            <div><div class="k">Railway Time &middot; IST (24-hour)</div><div class="d" id="profRailDate">&nbsp;</div></div>
+            <div class="t" id="profRailTime">--:--:--</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="modal-overlay" id="addAssetModal">
+  <div class="modal-box" style="max-width:560px;max-height:88vh;overflow-y:auto">
+    <h3>Add Asset</h3>
+    <p class="modal-sub">Fill in the work request details. Request ID is generated automatically.</p>
+    <form class="new-req-form" id="newReqForm">
+      <input type="text" id="reqIdPreview" class="full" placeholder="Req ID" disabled style="opacity:.6">
+
+      <div class="form-sec">Division &amp; Section</div>
+      <select name="division" id="fDiv" required><option value="">Select division</option></select>
+      <select name="section" id="fSec" required disabled><option value="">Select division first</option></select>
+
+      <div class="form-sec">Stations</div>
+      <select name="from_station" id="fFromSt" required disabled><option value="">Select division first</option></select>
+      <select name="to_station" id="fToSt" required disabled><option value="">Select division first</option></select>
+
+      <div class="form-sec">Junctions</div>
+      <select name="from_junction" id="fFromJn" required disabled><option value="">Select division first</option></select>
+      <select name="to_junction" id="fToJn" required disabled><option value="">Select division first</option></select>
+
+      <div class="form-sec">Line &amp; Location</div>
+      <select name="track_line" id="fLine" required>
+        <option value="">Select line</option>
+        <option value="Up">Up</option>
+        <option value="Down">Down</option>
+      </select>
+      <input type="text" name="km" placeholder="KM (e.g. 245.5)" required>
+      <input type="text" name="location" class="full" placeholder="Location" required>
+
+      <div class="form-sec">Work</div>
+      <select name="priority" id="fPrio" required>
+        <option value="">Select priority</option>
+        <option value="Critical">Critical</option>
+        <option value="High">High</option>
+        <option value="Medium">Medium</option>
+        <option value="Low">Low</option>
+      </select>
+      <input type="text" name="work_details" placeholder="Work details" required>
+      <input type="text" name="work_description" class="full" placeholder="Work description" required>
+
+      <div class="form-sec">Schedule</div>
+      <input type="date" name="work_date" placeholder="Asset block date" required>
+      <input type="time" name="start_time" id="assetStartTime" placeholder="Start time" required>
+      <input type="time" name="end_time" id="assetEndTime" placeholder="End time" required>
+      <div class="duration-note" id="assetDuration">Total duration: <b>&mdash;</b> <span style="font-size:11.5px">(calculated automatically from start &amp; end time)</span></div>
+
+      <div class="form-sec">Contact</div>
+      <input type="text" name="name" placeholder="Name" required>
+      <input type="tel" name="phone_number" placeholder="Phone number" required>
+
+      <div class="actions" style="grid-column:1/-1">
+        <button class="btn" type="button" id="cancelAddAssetBtn">Cancel</button>
+        <button class="btn primary" type="submit">Send for Approval</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="reasonModal">
+  <div class="modal-box">
+    <h3>Reason for not accepting</h3>
+    <p class="modal-sub">This will be sent to Station Master, Division Control and Control Office.</p>
+    <textarea id="reasonText" rows="4" placeholder="Type your reason here..."></textarea>
+    <div class="actions">
+      <button class="btn" id="reasonCancel">Cancel</button>
+      <button class="btn primary" id="reasonSubmit">Submit</button>
+    </div>
+  </div>
+</div>
+
+{{ page_data|json_script:"page-data" }}
+<script>
+const PAGE = JSON.parse(document.getElementById('page-data').textContent);
+const CSRF = "{{ csrf_token }}";
+const URLS = {
+  respond: "{% url 'worker_respond' 0 %}",
+  complete: "{% url 'worker_complete' 0 %}",
+  del: "{% url 'worker_delete_request' 0 %}",
+  create: "{% url 'worker_create_request' %}",
+  message: "{% url 'send_message' %}",
+};
+function urlFor(kind, id){ return URLS[kind].replace('/0/', '/'+id+'/'); }
+function postForm(url, data){
+  const fd = new FormData(); fd.append('csrfmiddlewaretoken', CSRF); fd.append('tab','dashboard');
+  Object.entries(data||{}).forEach(([k,v])=>fd.append(k,v));
+  return fetch(url,{method:'POST',body:fd});
+}
+
+const NAV = [
+  {id:'dashboard',label:'Dashboard',icon:'<path d="M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v5H3z"/>'},
+  {id:'requests',label:'My Requests',icon:'<path d="M9 12h6M9 16h6M9 8h6"/><rect x="4" y="3" width="16" height="18" rx="2"/>'},
+  {id:'approvals',label:'Approvals',icon:'<path d="M20 6L9 17l-5-5"/>'},
+  {id:'mywork',label:'My Works',icon:'<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2"/>'},
+  {id:'reschedule',label:'Reschedule',icon:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/>'},
+  {id:'completed',label:'Completed',icon:'<circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/>'},
+  {id:'comm',label:'Messages',icon:'<path d="M21 11.5a8.4 8.4 0 01-8.9 8.4 9 9 0 01-3.3-.6L3 21l1.8-5.4A8.4 8.4 0 1121 11.5z"/>'},
+  {id:'profile',label:'Profile',icon:'<circle cx="12" cy="7" r="4"/><path d="M5.5 21a6.5 6.5 0 0113 0"/>'}
+];
+function svg(inner){return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${inner}</svg>`}
+function fmtDT(s){return s?new Date(s).toLocaleString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',hour12:false}):'—'}
+function fmtTimeOnly(s){return s?new Date(s).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:false}):'—'}
+function fmtDateOnly(s){return s?new Date(s).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):'—'}
+function fmtMins(mins){
+  if(mins==null || mins<=0) return '\u2014';
+  const h = Math.floor(mins/60), m = mins%60;
+  return [h?h+'h':'', m?m+'m':''].filter(Boolean).join(' ');
+}
+function durationStr(a,b){
+  if(!a||!b) return '\u2014';
+  return fmtMins(Math.round((new Date(b) - new Date(a))/60000));
+}
+function minsBetween(hhmmA, hhmmB){
+  const [ah,am] = hhmmA.split(':').map(Number), [bh,bm] = hhmmB.split(':').map(Number);
+  return (bh*60+bm) - (ah*60+am);
+}
+function fmtYMD(ymd){ // '2026-09-28' -> '28 Sep 2026' (no timezone shift)
+  const [y,m,d] = ymd.split('-').map(Number);
+  return new Date(y,m-1,d).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+}
+function fmtUpload(iso){
+  return iso ? new Date(iso).toLocaleString('en-IN',{timeZone:'Asia/Kolkata',day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:false}) : '\u2014';
+}
+// Block date / start / end / duration for a request: what the worker entered on the
+// Add Asset form, or (older/AI requests, or after a reschedule) the schedule window.
+function winOf(r){
+  if(r.blockDate && r.startTime && r.endTime && !r.reschedule.rescheduled){
+    return {date: fmtYMD(r.blockDate), start: r.startTime, end: r.endTime,
+            total: r.totalTime || fmtMins(minsBetween(r.startTime, r.endTime))};
+  }
+  return {date: fmtDateOnly(r.dateTime), start: fmtTimeOnly(r.dateTime), end: fmtTimeOnly(r.endDateTime),
+          total: durationStr(r.dateTime, r.endDateTime)};
+}
+
+let requests = PAGE.requests;
+function prioBadge(p){
+  const v = String(p||'Normal');
+  const c = {critical:'red',high:'yellow',medium:'green'}[v.toLowerCase()] || 'grey';
+  return `<span class="badge ${c}">${v.toUpperCase()}</span>`;
+}
+function allApproved(r){ return r.approval.sm==='approved' && r.approval.dc==='approved'; }
+function badge(status){
+  const map={approved:'green',rejected:'red',pending:'yellow'};
+  const label={approved:'Approved',rejected:'Not Approved',pending:'Waiting'}[status];
+  return `<span class="badge ${map[status]}">${label}</span>`;
+}
+
+function renderNav(){
+  document.getElementById('navList').innerHTML = NAV.map(n=>
+    `<div class="nav-item" data-tab="${n.id}">${svg(n.icon)}<span>${n.label}</span></div>`).join('');
+  document.querySelectorAll('[data-tab]').forEach(el=>el.addEventListener('click',()=>{go(el.dataset.tab);closeNav();}));
+}
+function openNav(){ document.body.classList.add('nav-open'); }
+function closeNav(){ document.body.classList.remove('nav-open'); }
+document.getElementById('menuBtn').addEventListener('click', openNav);
+document.getElementById('scrim').addEventListener('click', closeNav);
+const SUBS = {
+  dashboard:'Your assigned maintenance work, at a glance',
+  requests:'All work requests assigned to or raised by you',
+  approvals:'Station Master \u2192 Division Control \u2192 You',
+  mywork:'Respond to new work and track what\u2019s active',
+  reschedule:'Requests with a changed date or time',
+  completed:'Work you have finished',
+  comm:'Talk to the officers handling your work',
+  profile:'Your details on file'
+};
+function go(tab){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('sec-'+tab).classList.add('active');
+  document.querySelectorAll('[data-tab]').forEach(el=>el.classList.toggle('active', el.dataset.tab===tab));
+  document.getElementById('pageTitle').textContent = NAV.find(n=>n.id===tab).label;
+  document.getElementById('pageSub').textContent = SUBS[tab];
+  document.querySelector('.main').scrollTo(0,0);
+  history.replaceState(null,'','#'+tab);
+}
+
+function renderCards(){
+  const total = requests.length;
+  const approved = requests.filter(allApproved).length;
+  const waiting = requests.filter(r=>!allApproved(r) && Object.values(r.approval).every(v=>v!=='rejected')).length;
+  const accepted = requests.filter(r=>allApproved(r) && r.response===true).length;
+  const active = requests.filter(r=>r.stage==='active').length;
+  const completed = requests.filter(r=>r.stage==='completed').length;
+  const resched = requests.filter(r=>r.reschedule.rescheduled).length;
+  const cards = [
+    {n:total,l:'My Requests'},
+    {n:approved,l:'Approved',c:'g'},
+    {n:waiting,l:'Waiting for Approval',c:'y'},
+    {n:accepted,l:'Accepted Works'},
+    {n:active,l:'Active Works'},
+    {n:completed,l:'Completed Works',c:'g'},
+    {n:resched,l:'Rescheduled Works',c:'y'}
+  ];
+  document.getElementById('summaryCards').innerHTML = cards.map(c=>`<div class="card ${c.c||''}"><div class="n">${c.n}</div><div class="l">${c.l}</div></div>`).join('');
+}
+
+function metaBlock(r){
+  return `<div class="meta-grid">
+    <div><b>${r.location}</b>Location</div>
+    <div><b>${r.fromJunction||'\u2014'} \u2192 ${r.toJunction||'\u2014'}</b>Junction</div>
+    <div><b>${r.fromStation||'\u2014'} \u2192 ${r.toStation||'\u2014'}</b>Station</div>
+    <div><b>${r.km}</b>KM / Work Location</div>
+    <div><b>${fmtDT(r.dateTime)}</b>Date &amp; Time</div>
+  </div>`;
+}
+function timeMetaBlock(r){
+  const w = winOf(r);
+  return `<div class="meta-grid">
+    <div><b>${w.date}</b>Date</div>
+    <div><b>${w.start}</b>Start Time</div>
+    <div><b>${w.end}</b>End Time</div>
+    <div><b>${w.total}</b>Total Duration</div>
+  </div>`;
+}
+function stageLabel(r){
+  if(r.stage==='pending-approval') return ['grey','Awaiting Approval'];
+  if(r.stage==='pending-response') return ['yellow','Awaiting Your Response'];
+  if(r.stage==='active') return ['green','Active'];
+  if(r.stage==='completed') return ['green','Completed'];
+  if(r.stage==='declined') return ['red','Declined by You'];
+  return ['grey',r.stage];
+}
+
+function approvalKey(r){
+  if(r.approval.sm==='rejected' || r.approval.dc==='rejected') return 'rejected';
+  if(allApproved(r)) return 'approved';
+  return 'pending';
+}
+function renderRequests(){
+  const head = ['WR','Priority','Division','Station','Section','Line','KM','Asset Upload Date','Start Time','End Time','Duration','Asset Block Date'];
+  const rows = requests.map(r=>{
+    const w = winOf(r);
+    const del = r.ownedByMe ? `<button class="card-x" data-id="${r.reqId}" title="Withdraw request">&times;</button>` : '';
+    return `<tr>
+      <td class="wr" title="${(r.work||'').replace(/"/g,'&quot;')}">${r.id}</td>
+      <td>${prioBadge(r.priority)}</td>
+      <td>${r.division}</td>
+      <td>${r.fromStation||'\u2014'} \u2192 ${r.toStation||'\u2014'}</td>
+      <td>${r.section}</td>
+      <td>${r.line}</td>
+      <td class="mono">${r.kmValue}</td>
+      <td class="mono">${fmtUpload(r.uploadedAt)}</td>
+      <td class="mono">${w.start}</td>
+      <td class="mono">${w.end}</td>
+      <td class="mono">${w.total}</td>
+      <td class="mono">${w.date}</td>
+      <td class="status-col">${badge(approvalKey(r))}${del}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('requestsList').innerHTML = requests.length
+    ? `<div class="tbl-wrap"><table class="req-table"><thead><tr>${head.map(h=>`<th>${h}</th>`).join('')}<th class="status-col">Status</th></tr></thead><tbody>${rows}</tbody></table></div>`
+    : `<div class="empty">No work requests.</div>`;
+  document.querySelectorAll('#requestsList .card-x').forEach(b=>b.addEventListener('click',()=>{
+    if(confirm('Withdraw this work request?')) postForm(urlFor('del',b.dataset.id),{}).then(()=>location.reload());
+  }));
+}
+
+function flowHtml(r){
+  const steps = [["Station Master",r.approval.sm],["Division Control",r.approval.dc]];
+  const map={approved:'green',rejected:'red',pending:'yellow'};
+  const label={approved:'Approved',rejected:'Not Approved',pending:'Waiting'};
+  let html = '<div class="flow">';
+  steps.forEach((s)=>{
+    html += `<div class="flow-step"><span class="flow-label">${s[0]}</span><span class="badge ${map[s[1]]}">${label[s[1]]}</span></div>`;
+    html += `<div class="flow-arrow">\u2193</div>`;
+  });
+  const finalReached = allApproved(r);
+  html += `<div class="flow-step"><span class="flow-label">Worker (You)</span><span class="badge ${finalReached?'green':'grey'}">${finalReached?'Assigned':'Not Yet'}</span></div>`;
+  html += '</div>';
+  return html;
+}
+function renderApprovals(){
+  document.getElementById('approvalsList').innerHTML = requests.length ? requests.map(r=>
+    `<div class="work-card"><div class="row"><span class="wid">${r.id}</span></div><div class="title">${r.work}</div>${flowHtml(r)}</div>`
+  ).join('') : `<div class="empty">No approvals to show.</div>`;
+}
+
+function renderMyWork(){
+  const pending = requests.filter(r=>r.stage==='pending-response');
+  document.getElementById('acceptanceList').innerHTML = pending.length ? pending.map(r=>`
+    <div class="work-card">
+      <div class="row"><span class="wid">${r.id}</span><span class="badge green">Fully Approved</span></div>
+      <div class="title">${r.work}</div>${timeMetaBlock(r)}
+      <div class="given-time">Time given to respond: ${r.responseGivenBy||'\u2014'}</div>
+      <div class="actions">
+        <button class="btn accept" data-id="${r.reqId}" data-resp="true">ACCEPT</button>
+        <button class="btn reject" data-id="${r.reqId}" data-resp="false">NOT ACCEPT</button>
+      </div>
+    </div>`).join('') : `<div class="empty">Nothing waiting on your response right now.</div>`;
+  document.querySelectorAll('#acceptanceList button').forEach(b=>b.addEventListener('click',()=>handleRespond(b.dataset.id,b.dataset.resp==='true')));
+
+  const active = requests.filter(r=>r.stage==='active');
+  document.getElementById('currentList').innerHTML = active.length ? active.map(r=>`
+    <div class="work-card"><div class="row"><span class="wid">${r.id}</span><span class="badge green">Accepted &mdash; In Progress</span></div>
+    <div class="title">${r.work}</div>${timeMetaBlock(r)}
+    <button class="btn primary full" style="margin-top:10px" onclick="markComplete(${r.reqId})">Mark Completed</button></div>`).join('') : `<div class="empty">No active works right now.</div>`;
+
+  const declined = requests.filter(r=>r.stage==='declined');
+  if(declined.length){
+    document.getElementById('acceptanceList').innerHTML += declined.map(r=>`
+      <div class="work-card"><div class="row"><span class="wid">${r.id}</span><span class="badge red">Not Accepted</span></div>
+      <div class="title">${r.work}</div>${timeMetaBlock(r)}</div>`).join('');
+  }
+}
+function markComplete(reqId){ postForm(urlFor('complete',reqId),{}).then(()=>location.reload()); }
+
+function renderReschedule(){
+  const eligible = requests.filter(allApproved);
+  document.getElementById('rescheduleList').innerHTML = eligible.length ? eligible.map(r=>{
+    const rs = r.reschedule;
+    return `<div class="work-card">
+      <div class="row"><span class="wid">${r.id}</span><span class="badge ${rs.rescheduled?'yellow':'green'}">${rs.rescheduled?'Rescheduled':'On Original Schedule'}</span></div>
+      <div class="title">${r.work}</div>
+      <div class="sched-compare">
+        <div class="sched-box"><div class="k">Original</div><div class="v">${fmtDT(r.dateTime)}</div></div>
+        <div class="sched-box"><div class="k">Rescheduled</div><div class="v">${rs.rescheduled?fmtDT(rs.newDateTime):'\u2014'}</div></div>
+      </div>
+    </div>`;
+  }).join('') : `<div class="empty">Reschedule options appear once a request clears both approvals.</div>`;
+}
+
+function renderCompleted(){
+  const done = requests.filter(r=>r.stage==='completed');
+  document.getElementById('completedList').innerHTML = done.length ? done.map(r=>`
+    <div class="work-card"><div class="row"><span class="wid">${r.id}</span><span class="badge green">Completed</span></div>
+    <div class="title">${r.work}</div>
+    <div class="meta-grid"><div><b>${r.location}</b>Location</div><div><b>${fmtDT(r.completedAt)}</b>Completed</div></div></div>`).join('')
+    : `<div class="empty">No completed works yet.</div>`;
+}
+
+function renderPendingPreview(){
+  const pending = requests.filter(r=>r.stage==='pending-response');
+  document.getElementById('pendingResponsePreview').innerHTML = pending.length ? pending.map(r=>`
+    <div class="work-card">
+      <div class="row"><span class="wid">${r.id}</span><span class="badge green">Fully Approved</span></div>
+      <div class="title">${r.work}</div>
+      ${timeMetaBlock(r)}
+      <div class="given-time">Time given to respond: ${r.responseGivenBy||'\u2014'}</div>
+      <div class="actions">
+        <button class="btn accept" data-id="${r.reqId}" data-resp="true">ACCEPT</button>
+        <button class="btn reject" data-id="${r.reqId}" data-resp="false">NOT ACCEPT</button>
+      </div>
+    </div>`).join('') : `<div class="empty">Nothing waiting on your response right now.</div>`;
+  document.querySelectorAll('#pendingResponsePreview button').forEach(b=>b.addEventListener('click',()=>handleRespond(b.dataset.id,b.dataset.resp==='true')));
+}
+
+const contacts = PAGE.contacts;
+let activeChat = contacts.length ? contacts[0].code : null;
+function renderChatTabs(){
+  document.getElementById('chatTabs').innerHTML = contacts.map(c=>`<div class="chat-tab ${c.code===activeChat?'active':''}" data-c="${c.code}">${c.label}</div>`).join('');
+  document.querySelectorAll('.chat-tab').forEach(el=>el.addEventListener('click',()=>{activeChat=el.dataset.c;renderChatTabs();renderMsgs();}));
+}
+function renderMsgs(){
+  const c = contacts.find(x=>x.code===activeChat);
+  document.getElementById('chatMsgs').innerHTML = (c && c.messages.length) ? c.messages.map(m=>`<div class="msg ${m.dir}">${m.t}<span class="meta">${m.time}</span></div>`).join('') : `<div class="empty">No messages yet.</div>`;
+  const box = document.getElementById('chatMsgs'); box.scrollTop = box.scrollHeight;
+}
+document.getElementById('chatSend').addEventListener('click',sendMsg);
+document.getElementById('chatInput').addEventListener('keydown',e=>{if(e.key==='Enter')sendMsg();});
+function sendMsg(){
+  const inp = document.getElementById('chatInput');
+  if(!inp.value.trim() || !activeChat) return;
+  postForm(URLS.message, {department: activeChat, body: inp.value.trim()}).then(()=>location.reload());
+}
+
+let pendingRejectId = null;
+function handleRespond(id, accepted){
+  if(accepted){ postForm(urlFor('respond',id), {decision:'accept'}).then(()=>location.reload()); }
+  else { openReasonModal(id); }
+}
+function openReasonModal(id){
+  pendingRejectId = id;
+  document.getElementById('reasonText').value = '';
+  document.getElementById('reasonModal').style.display = 'flex';
+  setTimeout(()=>document.getElementById('reasonText').focus(),0);
+}
+function closeReasonModal(){
+  document.getElementById('reasonModal').style.display = 'none';
+  pendingRejectId = null;
+}
+document.getElementById('reasonCancel').addEventListener('click', closeReasonModal);
+document.getElementById('reasonModal').addEventListener('click', (e)=>{ if(e.target.id==='reasonModal') closeReasonModal(); });
+document.getElementById('reasonSubmit').addEventListener('click', ()=>{
+  const reason = document.getElementById('reasonText').value.trim();
+  if(!reason){ document.getElementById('reasonText').focus(); return; }
+  postForm(urlFor('respond',pendingRejectId), {decision:'reject', reason}).then(()=>location.reload());
+});
+
+// ---- Add Asset: Division -> Section / Stations / Junctions ------------------
+const RW = PAGE.railway || {};
+const $f = id => document.getElementById(id);
+const escH = v => String(v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+const byName = (x,y) => x.localeCompare(y);
+
+function setOpts(sel, list, placeholder, keepValue){
+  const cur = keepValue || '';
+  const items = [...list].sort(byName);
+  sel.innerHTML = `<option value="">${escH(placeholder)}</option>` + items.map(v=>`<option value="${escH(v)}">${escH(v)}</option>`).join('');
+  sel.value = items.includes(cur) ? cur : '';
+  sel.disabled = items.length === 0;
+}
+// A "From" and "To" pair can't pick the same value: each list hides the other's choice.
+function refreshPair(aSel, bSel, list, phA, phB){
+  const av = aSel.value, bv = bSel.value;
+  setOpts(aSel, list.filter(x=>x!==bv), phA, av);
+  setOpts(bSel, list.filter(x=>x!==av), phB, bv);
+}
+function onDivisionChange(){
+  const d = RW[$f('fDiv').value];
+  const wait = 'Select division first';
+  if(!d){
+    setOpts($f('fSec'), [], wait);
+    ['fFromSt','fToSt','fFromJn','fToJn'].forEach(id=>setOpts($f(id), [], wait));
+    return;
+  }
+  setOpts($f('fSec'), d.sections, 'Select section');
+  setOpts($f('fFromSt'), d.stations, 'From station');
+  setOpts($f('fToSt'), d.stations, 'To station');
+  setOpts($f('fFromJn'), d.junctions, 'From junction');
+  setOpts($f('fToJn'), d.junctions, 'To junction');
+}
+function onStationChange(){
+  const d = RW[$f('fDiv').value]; if(!d) return;
+  refreshPair($f('fFromSt'), $f('fToSt'), d.stations, 'From station', 'To station');
+}
+function onJunctionChange(){
+  const d = RW[$f('fDiv').value]; if(!d) return;
+  refreshPair($f('fFromJn'), $f('fToJn'), d.junctions, 'From junction', 'To junction');
+}
+$f('fDiv').innerHTML = '<option value="">Select division</option>' + Object.keys(RW).sort(byName).map(v=>`<option value="${escH(v)}">${escH(v)}</option>`).join('');
+$f('fDiv').addEventListener('change', onDivisionChange);
+$f('fFromSt').addEventListener('change', onStationChange);
+$f('fToSt').addEventListener('change', onStationChange);
+$f('fFromJn').addEventListener('change', onJunctionChange);
+$f('fToJn').addEventListener('change', onJunctionChange);
+
+// ---- Add Asset: total duration is calculated automatically ------------------
+function recomputeTotalTime(){
+  const st = $f('assetStartTime').value, et = $f('assetEndTime').value;
+  const out = $f('assetDuration');
+  const note = '<span style="font-size:11.5px">(calculated automatically from start &amp; end time)</span>';
+  if(!st || !et){ out.innerHTML = `Total duration: <b>\u2014</b> ${note}`; return null; }
+  const mins = minsBetween(st, et);
+  if(mins <= 0){ out.innerHTML = `Total duration: <b style="color:var(--red)">End time must be after start time</b>`; return null; }
+  out.innerHTML = `Total duration: <b>${fmtMins(mins)}</b> ${note}`;
+  return mins;
+}
+$f('assetStartTime').addEventListener('change', recomputeTotalTime);
+$f('assetEndTime').addEventListener('change', recomputeTotalTime);
+
+function openAddAssetModal(){
+  $f('newReqForm').reset();
+  $f('reqIdPreview').value = 'Auto-generated on submit';
+  onDivisionChange();
+  recomputeTotalTime();
+  $f('addAssetModal').style.display = 'flex';
+}
+function closeAddAssetModal(){
+  $f('addAssetModal').style.display = 'none';
+}
+$f('openAddAssetBtn').addEventListener('click', openAddAssetModal);
+$f('cancelAddAssetBtn').addEventListener('click', closeAddAssetModal);
+$f('addAssetModal').addEventListener('click', (e)=>{ if(e.target.id==='addAssetModal') closeAddAssetModal(); });
+
+$f('newReqForm').addEventListener('submit', e=>{
+  e.preventDefault();
+  if(recomputeTotalTime() === null){ alert('Please enter a start time and an end time that is later than the start time.'); return; }
+  const fd = new FormData(e.target);
+  const data = {}; fd.forEach((v,k)=>{ data[k]=v; });
+  postForm(URLS.create, data).then(()=>location.reload());
+});
+
+// ---- Profile: live railway time (IST, 24-hour) -----------------------------
+function tickRailClock(){
+  const now = new Date();
+  $f('profRailTime').textContent = now.toLocaleTimeString('en-GB',{timeZone:'Asia/Kolkata',hourCycle:'h23'});
+  $f('profRailDate').textContent = now.toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata',weekday:'long',day:'2-digit',month:'short',year:'numeric'});
+}
+tickRailClock(); setInterval(tickRailClock, 1000);
+
+function renderAll(){
+  renderCards(); renderRequests(); renderApprovals(); renderMyWork(); renderReschedule(); renderCompleted(); renderPendingPreview();
+}
+renderNav(); renderChatTabs(); renderMsgs(); renderAll();
+(function(){const h=(location.hash||'#dashboard').slice(1); if(NAV.find(n=>n.id===h)) go(h); else go('dashboard');})();
+</script>
+{% include '_datepicker.html' %}
+</body>
+</html>

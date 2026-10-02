@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Control Office Dashboard</title>
+<style>
+:root{
+  --bg:#0c0d0f; --panel:#17181b; --panel2:#1e2023; --line:#2b2d31;
+  --text:#f2f2f3; --muted:#93969c; --green:#22c55e; --red:#ef4444; --yellow:#eab308;
+  --green-bg:rgba(34,197,94,.14); --red-bg:rgba(239,68,68,.14); --yellow-bg:rgba(234,179,8,.14);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);}
+a{color:inherit}
+.app{display:flex;min-height:100vh}
+.sidebar{width:230px;flex:0 0 230px;background:#0a0b0c;border-right:1px solid var(--line);
+  padding:18px 12px;position:-webkit-sticky;position:sticky;top:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column}
+.brand{display:flex;align-items:center;gap:10px;padding:4px 8px 18px;border-bottom:1px solid var(--line);margin-bottom:12px}
+.brand .dot{width:10px;height:10px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green)}
+.brand-text b{display:block;font-size:14px}
+.brand-text span{display:block;font-size:11px;color:var(--muted)}
+nav{flex:1}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;color:var(--muted);
+  font-size:13.5px;cursor:pointer;margin-bottom:2px;border:1px solid transparent;text-decoration:none}
+.nav-item svg{width:16px;height:16px;flex:0 0 16px}
+.nav-item:hover{background:var(--panel2);color:var(--text)}
+.nav-item.active{background:var(--panel2);color:var(--text);border-color:var(--line)}
+.menu-btn{display:none;background:none;border:1px solid var(--line);color:var(--text);
+  width:38px;height:38px;border-radius:8px;font-size:18px;cursor:pointer;flex-shrink:0;
+  align-items:center;justify-content:center}
+.scrim{display:none}
+.sidebar-foot{padding-top:14px;border-top:1px solid var(--line);margin-top:10px}
+.logout-link{display:block;color:var(--red);font-size:12px;text-decoration:none;border:1px solid var(--line);padding:8px 10px;border-radius:8px;text-align:center}
+.logout-link:hover{background:var(--red-bg)}
+.main{flex:1;min-width:0;padding:22px 26px 60px}
+.topbar{
+  position:-webkit-sticky;position:sticky;top:env(safe-area-inset-top,0px);z-index:20;
+  background:var(--bg);margin:0 -26px 18px;padding:14px 26px;
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;border-bottom:1px solid var(--line)
+}
+.topbar .tb-left{display:flex;align-items:center;gap:12px}
+.topbar h1{font-size:19px;margin:0}
+.topbar .sub{color:var(--muted);font-size:12.5px;margin-top:3px}
+.live{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);background:var(--panel);
+  border:1px solid var(--line);padding:6px 12px;border-radius:20px}
+.live .pulse{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 1.6s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,128px));gap:10px;justify-content:start;margin-bottom:22px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.card .n{font-size:20px;font-weight:700}
+.card .l{font-size:11.5px;color:var(--muted);margin-top:2px}
+.card.g .n{color:var(--green)} .card.r .n{color:var(--red)} .card.y .n{color:var(--yellow)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:18px}
+.panel h2{font-size:15px;margin:0 0 12px}
+.panel-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+select,input[type=text],input[type=datetime-local]{background:#0e0f11;border:1px solid var(--line);color:var(--text);
+  padding:7px 10px;border-radius:7px;font-size:12.5px}
+button{cursor:pointer;font-family:inherit}
+.btn{background:var(--panel2);border:1px solid var(--line);color:var(--text);padding:7px 12px;border-radius:7px;font-size:12.5px}
+.btn:hover{border-color:#3a3d42}
+.btn.primary{background:#fff;color:#0c0d0f;border-color:#fff;font-weight:600}
+.btn.small{padding:4px 9px;font-size:11.5px}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{text-align:left;color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.03em;
+  padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 10px;border-bottom:1px solid #202226;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap}
+.badge.green{background:var(--green-bg);color:var(--green)}
+.badge.red{background:var(--red-bg);color:var(--red)}
+.badge.yellow{background:var(--yellow-bg);color:var(--yellow)}
+.prio-Critical,.prio-High{color:var(--red);font-weight:600}
+.prio-Medium{color:var(--yellow);font-weight:600}
+.prio-Low{color:var(--green);font-weight:600}
+.tb-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.rail-clock{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);
+  padding:5px 14px;border-radius:20px;line-height:1.15}
+.rail-clock .rc-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.rail-clock .rc-time{font-size:17px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.03em;color:var(--green)}
+.rail-clock .rc-date{font-size:11px;color:var(--muted);white-space:nowrap}
+.rail-clock .rc-col{display:flex;flex-direction:column}
+.filterbar{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px;background:var(--panel);
+  border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:18px}
+.fb-group{display:flex;flex-direction:column;gap:4px;min-width:150px}
+.fb-group label{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.fb-group select,.fb-group input{width:100%;padding:8px 10px}
+.fb-search{flex:1 1 240px}
+.fb-count{margin-left:auto;font-size:12px;color:var(--muted);align-self:center;white-space:nowrap}
+@media(max-width:760px){.fb-group{flex:1 1 140px}.fb-count{margin-left:0;width:100%}.rail-clock{padding:5px 10px}}
+.section{display:none}
+.section.active{display:block}
+.mono{color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.chat-wrap{display:grid;grid-template-columns:200px 1fr;gap:14px;height:420px}
+.chat-list{border-right:1px solid var(--line);padding-right:10px;overflow-y:auto}
+.chat-contact{padding:9px 8px;border-radius:8px;font-size:12.5px;cursor:pointer;margin-bottom:3px}
+.chat-contact.active{background:var(--panel2)}
+.chat-body{display:flex;flex-direction:column;min-width:0}
+.msgs{flex:1;overflow-y:auto;padding:6px 4px;display:flex;flex-direction:column;gap:8px}
+.msg{max-width:70%;padding:8px 11px;border-radius:10px;font-size:12.5px;line-height:1.4}
+.msg.in{background:var(--panel2);align-self:flex-start}
+.msg.out{background:#2a3a2f;align-self:flex-end}
+.msg .meta{display:block;color:var(--muted);font-size:10px;margin-top:3px}
+.chat-input{display:flex;gap:8px;margin-top:10px}
+.chat-input input{flex:1;min-width:0}
+.comm-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.comm-shell{display:grid;grid-template-columns:230px 1fr;gap:0;height:480px;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.worker-list{background:var(--panel2);border-right:1px solid var(--line);overflow-y:auto;min-height:0}
+.worker-search{padding:10px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--panel2)}
+.worker-search input{width:100%}
+.worker-item{display:flex;align-items:center;gap:9px;padding:10px 12px;cursor:pointer;border-bottom:1px solid #222327;border-left:2px solid transparent}
+.worker-item:hover{background:rgba(255,255,255,.03)}
+.worker-item.active{background:rgba(255,255,255,.06);border-left-color:var(--green)}
+.wav{width:30px;height:30px;border-radius:50%;background:var(--panel);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:11.5px;flex-shrink:0;position:relative}
+.stat-dot{position:absolute;bottom:-1px;right:-1px;width:8px;height:8px;border-radius:50%;border:2px solid var(--panel2)}
+.wname{font-size:12.5px;font-weight:600}
+.wrole{font-size:11px;color:var(--muted)}
+.ccol{display:flex;flex-direction:column;min-width:0;background:var(--panel)}
+.chat-head{padding:12px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:10px}
+.chat-head .name{font-size:13.5px;font-weight:600}
+.chat-head .role{font-size:11px;color:var(--muted)}
+@media(max-width:760px){.comm-shell{grid-template-columns:1fr;height:auto}.worker-list{max-height:180px}}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:50;padding:16px}
+.overlay.show{display:flex}
+.modal{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:22px;width:100%;max-width:340px}
+.modal h3{margin:0 0 4px;font-size:15px}
+.modal .id{color:var(--muted);font-size:12px;margin-bottom:14px}
+.modal label{display:block;font-size:11.5px;color:var(--muted);margin-bottom:5px;margin-top:12px}
+.modal input{width:100%}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:18px}
+.filters{display:flex;gap:10px;flex-wrap:wrap}
+.empty{color:var(--muted);text-align:center;padding:20px}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-thumb{background:#2c2e32;border-radius:4px}
+@media(max-width:1100px){.grid2{grid-template-columns:1fr}}
+@media(max-width:760px){
+  .menu-btn{display:flex}
+  .sidebar{position:fixed;top:0;left:0;height:100%;width:250px;transform:translateX(-100%);
+    transition:transform .25s ease;z-index:45;box-shadow:2px 0 24px rgba(0,0,0,.5)}
+  body.nav-open .sidebar{transform:translateX(0)}
+  body.nav-open .scrim{display:block;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:40}
+  .cards{grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px}
+  .main{padding:16px 14px 40px}
+  .topbar{margin:0 -14px 14px;padding:12px 14px}
+  .topbar h1{font-size:17px}
+  .chat-wrap{grid-template-columns:1fr;height:auto}
+  .chat-list{border-right:none;border-bottom:1px solid var(--line);padding-right:0;padding-bottom:10px;margin-bottom:10px;max-height:140px}
+  .msgs{max-height:280px}
+}
+@media(max-width:420px){.card{padding:9px 10px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <span class="dot"></span>
+      <div class="brand-text"><b>Control Office</b><span>{{ profile.user.username }} &middot; Live</span></div>
+    </div>
+    <nav id="navList"></nav>
+    <a href="{% url 'train_dashboard' %}" style="display:block;margin:10px 0 0;padding:9px 12px;border:1px solid var(--line);border-radius:8px;color:inherit;text-decoration:none;font-size:13px;text-align:center">&#128646; Live Train Tracking</a>
+    <div class="sidebar-foot"><a class="logout-link" href="{% url 'logout' %}">Logout</a></div>
+  </aside>
+  <div class="scrim" id="scrim"></div>
+
+  <main class="main">
+    <div class="topbar">
+      <div class="tb-left">
+        <button class="menu-btn" id="menuBtn" aria-label="Open menu">&#9776;</button>
+        <div><h1 id="pageTitle">Dashboard</h1><div class="sub" id="pageSub">Centralized monitoring across all divisions</div></div>
+      </div>
+      <div class="tb-right">
+        <div class="rail-clock" title="Current railway time (Indian Standard Time, 24-hour)">
+          <div class="rc-col"><span class="rc-label">Railway Time &middot; IST</span><span class="rc-date" id="railDate">&nbsp;</span></div>
+          <span class="rc-time" id="railTime">--:--:--</span>
+        </div>
+        <div class="live"><span class="pulse"></span> Control room feed active</div>
+      </div>
+    </div>
+
+    {% if messages %}{% for m in messages %}<div class="panel" style="border-color:var(--green)">{{ m }}</div>{% endfor %}{% endif %}
+
+    <div class="filterbar" id="filterBar">
+      <div class="fb-group"><label for="fDivision">Division</label>
+        <select id="fDivision"><option value="">All Divisions</option></select></div>
+      <div class="fb-group"><label for="fSection">Section</label>
+        <select id="fSection"><option value="">All Sections</option></select></div>
+      <div class="fb-group"><label for="fPriority">Priority</label>
+        <select id="fPriority">
+          <option value="">All Priorities</option>
+          <option value="Critical">Critical</option>
+          <option value="High">High</option>
+          <option value="Medium">Medium</option>
+          <option value="Low">Low</option>
+        </select></div>
+      <div class="fb-group fb-search"><label for="fSearch">Search assets</label>
+        <input type="text" id="fSearch" placeholder="Req ID, work, location, station, worker..." autocomplete="off"></div>
+      <button class="btn" id="fClear" type="button">Clear</button>
+      <span class="fb-count" id="fCount"></span>
+    </div>
+
+    <div class="cards" id="summaryCards"></div>
+
+    <section class="section active" id="sec-dashboard">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:14px">
+        <a href="{% url 'train_dashboard' %}" class="btn primary" style="text-decoration:none;display:inline-flex;align-items:center;gap:8px;padding:9px 16px;font-size:13px">&#128646; Train Detection</a>
+      </div>
+      <div class="grid2">
+        <div class="panel">
+          <h2>AI Suggested Work — All Divisions</h2>
+          <div style="overflow-x:auto"><table><thead><tr><th>Division</th><th>Work</th><th>Priority</th><th>Location</th><th>Suggested</th><th>Status</th></tr></thead>
+          <tbody id="aiTablePreview"></tbody></table></div>
+        </div>
+        <div class="panel">
+          <h2>Approval Snapshot</h2>
+          <div style="overflow-x:auto"><table><thead><tr><th>ID</th><th>Division</th><th>Station Master</th><th>Division Office</th></tr></thead>
+          <tbody id="approvalPreview"></tbody></table></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="sec-divisions">
+      <div class="panel">
+        <h2>Junction-to-Junction</h2>
+        <div style="overflow-x:auto"><table><thead><tr><th>From Junction</th><th>To Junction</th><th>Section</th><th>Division</th></tr></thead>
+        <tbody id="junctionTable"></tbody></table></div>
+      </div>
+      <div class="panel">
+        <h2>Station-to-Station</h2>
+        <div style="overflow-x:auto"><table><thead><tr><th>From Station</th><th>To Station</th><th>Priority</th><th>Division</th></tr></thead>
+        <tbody id="stationTable"></tbody></table></div>
+      </div>
+      <div class="panel">
+        <h2>Work Location</h2>
+        <div style="overflow-x:auto"><table><thead><tr><th>ID</th><th>KM</th><th>Work Location</th><th>Division</th><th>Date</th></tr></thead>
+        <tbody id="kmTable"></tbody></table></div>
+      </div>
+    </section>
+
+    <section class="section" id="sec-ai">
+      <div class="panel">
+        <h2>AI Suggested Work — All Divisions</h2>
+        <div style="overflow-x:auto"><table><thead><tr><th>Division</th><th>Work Details</th><th>Priority</th><th>Location</th><th>Suggested Date/Time</th><th>Start Time</th><th>End Time</th><th>Status</th></tr></thead>
+        <tbody id="aiTableFull"></tbody></table></div>
+      </div>
+    </section>
+
+    <section class="section" id="sec-requests">
+      <div class="panel">
+        <div class="panel-row">
+          <h2 style="margin:0">Current Requests — All Divisions</h2>
+          <div class="filters">
+            <select id="filterStatus"><option value="">All Statuses</option></select>
+          </div>
+        </div>
+        <div style="overflow-x:auto"><table><thead><tr><th>Req ID</th><th>Division</th><th>Work Details</th><th>Priority</th><th>Location</th><th>Date/Time</th><th>Status</th></tr></thead>
+        <tbody id="reqTable"></tbody></table></div>
+      </div>
+    </section>
+
+    <section class="section" id="sec-approvals">
+      <div class="panel">
+        <h2>Approval Status</h2>
+        <div style="overflow-x:auto"><table><thead><tr><th>Req ID</th><th>Division</th><th>Work Details</th><th>Priority</th><th>Station Master</th><th>Division Office</th></tr></thead>
+        <tbody id="approvalTable"></tbody></table></div>
+      </div>
+    </section>
+
+    <section class="section" id="sec-worker">
+      <div class="panel">
+        <h2>Worker Status</h2>
+        <div style="overflow-x:auto"><table><thead><tr><th>Req ID</th><th>Division</th><th>Work Details</th><th>Priority</th><th>Worker Status</th><th>Acceptance</th><th>Reporting Time</th></tr></thead>
+        <tbody id="workerTable"></tbody></table></div>
+      </div>
+    </section>
+
+    <section class="section" id="sec-reschedule">
+      <div class="panel">
+        <h2>Reschedule Work Requests</h2>
+        <div style="overflow-x:auto"><table><thead><tr><th>Req ID</th><th>Division</th><th>Work Details</th><th>Block Time</th><th>Start Time</th><th>End Time</th><th>Current Date/Time</th><th>Reschedule Status</th><th></th></tr></thead>
+        <tbody id="rescheduleTable"></tbody></table></div>
+      </div>
+    </section>
+
+    <section class="section" id="sec-comm">
+      <div class="panel">
+        <h2>Communication</h2>
+        <div class="comm-tabs">
+          <button class="btn small primary" id="commTabWorkers">Workers</button>
+          <button class="btn small" id="commTabSTATION">Station Control</button>
+          <button class="btn small" id="commTabDIVISION">Division Control</button>
+        </div>
+
+        <div class="comm-shell" id="commWorkers">
+          <div class="worker-list">
+            <div class="worker-search"><input type="text" id="wQ" placeholder="Search workers or Req ID..."></div>
+            <div id="wItems"></div>
+          </div>
+          <div class="ccol">
+            <div class="chat-head"><div><div class="name" id="chatName"></div><div class="role" id="chatRole"></div></div><span id="chatStatus"></span></div>
+            <div class="msgs" id="chatMsgs"></div>
+            <div class="chat-input">
+              <input type="text" id="chatInput" placeholder="Type a message to the worker...">
+              <button class="btn primary" id="chatSend">Send</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="comm-shell" id="commDept" style="display:none">
+          <div class="ccol" style="grid-column:1/-1">
+            <div class="chat-head"><div class="name" id="deptChatName"></div></div>
+            <div class="msgs" id="deptChatMsgs"></div>
+            <div class="chat-input">
+              <input type="text" id="deptChatInput" placeholder="Type a message...">
+              <button class="btn primary" id="deptChatSend">Send</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div id="modalForm">
+      <h3>Reschedule Work</h3>
+      <div class="id" id="modalId"></div>
+      <label>New Date &amp; Time</label>
+      <input type="datetime-local" id="modalDateTime">
+      <label>Reason for Rescheduling</label>
+      <textarea id="modalReason" rows="3" placeholder="Why is this being rescheduled?"
+        style="width:100%;background:#0e0f11;border:1px solid var(--line);color:var(--text);padding:7px 10px;border-radius:7px;font-size:12.5px;font-family:inherit;resize:vertical"></textarea>
+      <div class="modal-actions">
+        <button class="btn" id="modalCancel">Cancel</button>
+        <button class="btn primary" id="modalConfirm">Confirm Reschedule</button>
+      </div>
+    </div>
+    <div id="modalConfirmed" style="display:none">
+      <h3>Rescheduled</h3>
+      <div class="id" id="confirmedId"></div>
+      <div style="margin:14px 0;font-size:12.5px;display:flex;flex-direction:column;gap:8px">
+        <div><b>New Date &amp; Time:</b> <span id="confirmedDT"></span></div>
+        <div><b>Reason:</b> <span id="confirmedReason"></span></div>
+      </div>
+      <div style="font-size:11.5px;color:var(--muted);margin-bottom:6px">The assigned worker has been notified with this reason and the new time on the Communication page.</div>
+      <div class="modal-actions">
+        <button class="btn primary" id="modalDone">Done</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{{ page_data|json_script:"page-data" }}
+<script>
+const PAGE = JSON.parse(document.getElementById('page-data').textContent);
+const CSRF = "{{ csrf_token }}";
+const RESCHED_URL = "{% url 'reschedule_request' 0 %}";
+const MSG_URL = "{% url 'send_message' %}";
+const REQ_MSG_URL = "{% url 'send_request_message' 0 %}";
+function postForm(url, data){
+  const fd = new FormData(); fd.append('csrfmiddlewaretoken', CSRF); fd.append('tab','comm');
+  Object.entries(data||{}).forEach(([k,v])=>fd.append(k,v));
+  return fetch(url,{method:'POST',body:fd});
+}
+
+const icons = {
+  dashboard:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>',
+  divisions:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 010 18 15 15 0 010-18z"/></svg>',
+  ai:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l1.6 4.8L18 8l-4.4 1.2L12 14l-1.6-4.8L6 8l4.4-1.2z"/></svg>',
+  requests:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12h6M9 16h6M9 8h6"/><rect x="4" y="3" width="16" height="18" rx="2"/></svg>',
+  approvals:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>',
+  worker:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="7" r="4"/><path d="M5.5 21a6.5 6.5 0 0113 0"/></svg>',
+  reschedule:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>',
+  comm:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.4 8.4 0 01-8.9 8.4 9 9 0 01-3.3-.6L3 21l1.8-5.4A8.4 8.4 0 1121 11.5z"/></svg>'
+};
+const NAV = [
+  {id:'dashboard',label:'Dashboard'},
+  {id:'divisions',label:'All Divisions'},
+  {id:'ai',label:'AI Suggested Work'},
+  {id:'requests',label:'Current Requests'},
+  {id:'approvals',label:'Approvals'},
+  {id:'worker',label:'Worker Status'},
+  {id:'reschedule',label:'Reschedule'},
+  {id:'comm',label:'Communication'}
+];
+
+const data = PAGE.data;
+const DIVISIONS = PAGE.divisions;
+const S = PAGE.S || [];
+const M = PAGE.M || {};
+
+const prioTd = r => `<td class="prio-${r.priority}">${r.priority}</td>`;
+function fmtDT(iso){ const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(iso||''); if(!m) return '—'; const mon=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+m[2]-1]; return m[3]+' '+mon+', '+m[4]+':'+m[5]; }
+
+function fmtIST(iso){
+  return iso ? new Date(iso).toLocaleString('en-IN',{timeZone:'Asia/Kolkata',day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:false}) + ' IST' : '—';
+}
+
+function badge(status){
+  const map = {approved:'green',rejected:'red',pending:'yellow'};
+  const label = {approved:'Approved',rejected:'Not Approved',pending:'Waiting'}[status];
+  return `<span class="badge ${map[status]}">${label}</span>`;
+}
+function workerStatusInfo(r){
+  if(r.approval.sm==='rejected' || r.approval.div==='rejected') return ['red','Not Approved'];
+  if(r.approval.sm==='pending' || r.approval.div==='pending') return ['yellow','Waiting'];
+  if(r.reqStatus==='Closed') return ['green','Closed'];
+  if(r.reqStatus==='Open') return ['yellow','Open'];
+  return ['yellow','Processing'];
+}
+function acceptanceBadge(r){
+  const key = r.worker.a===true ? 'approved' : r.worker.a===false ? 'rejected' : 'pending';
+  return badge(key);
+}
+
+function renderNav(){
+  const el = document.getElementById('navList');
+  el.innerHTML = NAV.map(n=>`<div class="nav-item" data-tab="${n.id}">${icons[n.id]}<span>${n.label}</span></div>`).join('');
+  el.querySelectorAll('.nav-item').forEach(n=>n.addEventListener('click',()=>{go(n.dataset.tab); closeNav()}));
+}
+function openNav(){ document.body.classList.add('nav-open') }
+function closeNav(){ document.body.classList.remove('nav-open') }
+document.getElementById('menuBtn').addEventListener('click', openNav);
+document.getElementById('scrim').addEventListener('click', closeNav);
+
+function go(tab){
+  currentTab = tab;
+  document.getElementById('filterBar').style.display = (tab==='comm') ? 'none' : '';
+  renderCards();
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('sec-'+tab).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active', n.dataset.tab===tab));
+  document.getElementById('pageTitle').textContent = NAV.find(n=>n.id===tab).label;
+  const subs = {dashboard:'Centralized monitoring across all divisions',divisions:'Junctions, stations and work-location detail',
+    ai:'Machine-recommended maintenance across every division',requests:'All active work requests with division and status filters',
+    approvals:'Station Master and Division Office sign-off',worker:'Field worker status, acceptance and reporting time',
+    reschedule:'Move a work request to a new date and time',comm:'Talk to Station Masters, Division Control and field workers'};
+  document.getElementById('pageSub').textContent = subs[tab];
+  history.replaceState(null,'','#'+tab);
+}
+
+// ---------------------------------------------------------------------
+// Global filters (Division / Section / Priority / Search).
+// Applied on every page except Communication.
+// ---------------------------------------------------------------------
+let currentTab = 'dashboard';
+const FKEY = 'ctrlDashFilters';
+const F = {division:'', section:'', priority:'', q:''};
+try{ Object.assign(F, JSON.parse(sessionStorage.getItem(FKEY)||'{}')); }catch(e){}
+function saveF(){ try{ sessionStorage.setItem(FKEY, JSON.stringify(F)); }catch(e){} }
+
+const divOf = r => r.division || 'Unassigned';
+const secOf = r => r.section || 'Unassigned';
+const esc = v => String(v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+function hasFilters(){ return !!(F.division || F.section || F.priority || F.q.trim()); }
+function haystack(r){
+  return [r.reqId, divOf(r), secOf(r), r.work, r.priority, r.location, r.fromJunction, r.toJunction,
+          r.fromStation, r.toStation, r.km, r.reqStatus, r.source, r.worker.name, r.worker.role,
+          fmtDT(r.dateTime), fmtIST(r.uploadedAt)].join(' ').toLowerCase();
+}
+function view(){
+  const terms = F.q.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  return data.filter(r =>
+    (!F.division || divOf(r) === F.division) &&
+    (!F.section  || secOf(r) === F.section) &&
+    (!F.priority || String(r.priority).toLowerCase() === F.priority.toLowerCase()) &&
+    (!terms.length || terms.every(t => haystack(r).includes(t)))
+  );
+}
+const emptyRow = (cols, msg) => `<tr><td colspan="${cols}" class="empty">${hasFilters() ? 'No assets match the selected filters.' : msg}</td></tr>`;
+
+function fillSelect(sel, values, allLabel, current){
+  sel.innerHTML = `<option value="">${allLabel}</option>` + values.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');
+  sel.value = values.includes(current) ? current : '';
+  return sel.value;
+}
+// Division list comes from all assets; Section list narrows to the chosen division.
+function refreshFilterOptions(){
+  const divs = [...new Set(data.map(divOf))].sort();
+  F.division = fillSelect(document.getElementById('fDivision'), divs, 'All Divisions', F.division);
+  const pool = F.division ? data.filter(r => divOf(r) === F.division) : data;
+  const secs = [...new Set(pool.map(secOf))].sort();
+  F.section = fillSelect(document.getElementById('fSection'), secs, 'All Sections', F.section);
+  document.getElementById('fPriority').value = F.priority;
+  document.getElementById('fSearch').value = F.q;
+}
+function applyFilters(){ saveF(); renderFiltered(); }
+function setupGlobalFilters(){
+  refreshFilterOptions();
+  document.getElementById('fDivision').addEventListener('change', e=>{ F.division = e.target.value; refreshFilterOptions(); applyFilters(); });
+  document.getElementById('fSection').addEventListener('change', e=>{ F.section = e.target.value; applyFilters(); });
+  document.getElementById('fPriority').addEventListener('change', e=>{ F.priority = e.target.value; applyFilters(); });
+  document.getElementById('fSearch').addEventListener('input', e=>{ F.q = e.target.value; applyFilters(); });
+  document.getElementById('fClear').addEventListener('click', ()=>{
+    F.division = F.section = F.priority = F.q = ''; refreshFilterOptions(); applyFilters();
+  });
+}
+
+function renderCards(){
+  // Cards follow the filters, except on Communication where the filter bar is hidden.
+  const rows = currentTab === 'comm' ? data : view();
+  const total = rows.length;
+  const ai = rows.filter(d=>d.source==='AI').length;
+  const approved = rows.filter(d=>d.approval.sm==='approved'&&d.approval.div==='approved').length;
+  const notApproved = rows.filter(d=>d.approval.sm==='rejected'||d.approval.div==='rejected').length;
+  const workerAcc = rows.filter(d=>d.worker.a===true).length;
+  const resched = rows.filter(d=>d.reschedule.done).length;
+  const cards = [
+    {n:new Set(rows.map(divOf)).size,l:'Total Divisions'},
+    {n:total,l:'Current Requests'},
+    {n:ai,l:'AI Suggested Works'},
+    {n:approved,l:'Approved Requests',c:'g'},
+    {n:notApproved,l:'Not Approved',c:'r'},
+    {n:workerAcc,l:'Worker Accepted'},
+    {n:resched,l:'Rescheduled Works',c:'y'}
+  ];
+  document.getElementById('summaryCards').innerHTML = cards.map(c=>`<div class="card ${c.c||''}"><div class="n">${c.n}</div><div class="l">${c.l}</div></div>`).join('');
+}
+
+function renderAI(rows){
+  rows = rows.filter(d=>d.source==='AI');
+  const statMap = {approved:'green',rejected:'red',pending:'yellow'};
+  const statLabel = {approved:'Approved',rejected:'Not Approved',pending:'Waiting'};
+  const rowHtml = r=>`<tr><td>${r.division}</td><td>${r.work}</td><td class="prio-${r.priority}">${r.priority}</td><td>${r.location}</td><td class="mono">${fmtDT(r.dateTime)}</td><td><span class="badge ${statMap[r.aiStatus]}">${statLabel[r.aiStatus]}</span></td></tr>`;
+  const fullRowHtml = r=>`<tr><td>${r.division}</td><td>${r.work}</td><td class="prio-${r.priority}">${r.priority}</td><td>${r.location}</td><td class="mono">${fmtDT(r.dateTime)}</td><td class="mono">${r.stm||'—'}</td><td class="mono">${r.etm||'—'}</td><td><span class="badge ${statMap[r.aiStatus]}">${statLabel[r.aiStatus]}</span></td></tr>`;
+  const empty = emptyRow(6,'No AI-suggested assets.');
+  document.getElementById('aiTablePreview').innerHTML = rows.length ? rows.slice(0,5).map(rowHtml).join('') : empty;
+  document.getElementById('aiTableFull').innerHTML = rows.length ? rows.map(fullRowHtml).join('') : emptyRow(8,'No AI-suggested assets.');
+}
+
+function renderDivisions(rows){
+  document.getElementById('junctionTable').innerHTML = rows.map(r=>`<tr><td>${r.fromJunction||'—'}</td><td>${r.toJunction||'—'}</td><td>${r.section||'—'}</td><td>${r.division}</td></tr>`).join('') || emptyRow(4,'No data yet.');
+  document.getElementById('stationTable').innerHTML = rows.map(r=>`<tr><td>${r.fromStation||'—'}</td><td>${r.toStation||'—'}</td>${prioTd(r)}<td>${r.division}</td></tr>`).join('') || emptyRow(4,'No data yet.');
+  document.getElementById('kmTable').innerHTML = rows.map(r=>`<tr><td class="mono">${r.reqId}</td><td class="mono">${r.km||'—'}</td><td>${r.location}</td><td>${r.division}</td><td class="mono">${fmtDT(r.dateTime)}</td></tr>`).join('') || emptyRow(5,'No data yet.');
+}
+
+function renderRequests(rows){
+  rows = rows || view();
+  const selStat = document.getElementById('filterStatus').value;
+  rows = rows.filter(r=>!selStat||r.reqStatus===selStat);
+  document.getElementById('reqTable').innerHTML = rows.map(r=>`<tr><td class="mono">${r.reqId}</td><td>${r.division}</td><td>${r.work}</td>${prioTd(r)}<td>${r.location}</td><td class="mono">${fmtDT(r.dateTime)}</td><td>${r.reqStatus}</td></tr>`).join('') || emptyRow(7,'No requests match these filters');
+}
+function setupFilters(){
+  const fs = document.getElementById('filterStatus');
+  const statuses = [...new Set(data.map(r=>r.reqStatus))];
+  fs.innerHTML += statuses.map(s=>`<option value="${s}">${s}</option>`).join('');
+  fs.addEventListener('change',()=>renderRequests());
+}
+
+function renderApprovals(rows){
+  const rowHtml = r=>`<tr><td class="mono">${r.reqId}</td><td>${r.division}</td><td>${r.work}</td>${prioTd(r)}<td>${badge(r.approval.sm)}</td><td>${badge(r.approval.div)}</td></tr>`;
+  document.getElementById('approvalTable').innerHTML = rows.length ? rows.map(rowHtml).join('') : emptyRow(6,'Nothing to show.');
+  document.getElementById('approvalPreview').innerHTML = rows.slice(0,6).map(r=>`<tr><td class="mono">${r.reqId}</td><td>${r.division}</td><td>${badge(r.approval.sm)}</td><td>${badge(r.approval.div)}</td></tr>`).join('') || emptyRow(4,'Nothing to show yet.');
+}
+
+function renderWorker(rows){
+  document.getElementById('workerTable').innerHTML = rows.map(r=>{
+    const [c,l] = workerStatusInfo(r);
+    // Reporting Time = the date & time this asset was uploaded (IST).
+    return `<tr><td class="mono">${r.reqId}</td><td>${r.division}</td><td>${r.work}</td>${prioTd(r)}<td><span class="badge ${c}">${l}</span></td><td>${acceptanceBadge(r)}</td><td class="mono">${fmtIST(r.uploadedAt)}</td></tr>`;
+  }).join('') || emptyRow(7,'No workers assigned yet.');
+}
+
+function renderReschedule(rows){
+  document.getElementById('rescheduleTable').innerHTML = rows.map(r=>{
+    const status = r.reschedule.done ? `<span class="badge yellow" title="${r.reschedule.reason ? 'Reason: '+r.reschedule.reason.replace(/"/g,'&quot;') : ''}">Rescheduled &rarr; ${fmtDT(r.reschedule.newDT||r.dateTime)}</span>` : `<span class="badge green">On Original Schedule</span>`;
+    return `<tr><td class="mono">${r.reqId}</td><td>${r.division}</td><td>${r.work}</td><td class="mono">${r.blockTime}</td><td class="mono">${r.startTime||'—'}</td><td class="mono">${r.endTime||'—'}</td><td class="mono">${fmtDT(r.dateTime)}</td><td>${status}</td><td><button class="btn small" data-id="${r.reqId}">Reschedule</button></td></tr>`;
+  }).join('') || emptyRow(9,'No requests yet.');
+  document.querySelectorAll('#rescheduleTable button').forEach(b=>b.addEventListener('click',()=>openModal(b.dataset.id)));
+}
+
+// Re-draws every page that respects the global filters (Communication is not included).
+function renderFiltered(){
+  const rows = view();
+  renderCards();
+  renderAI(rows); renderDivisions(rows); renderRequests(rows);
+  renderApprovals(rows); renderWorker(rows); renderReschedule(rows);
+  document.getElementById('fCount').textContent = `Showing ${rows.length} of ${data.length} assets`;
+}
+
+// Live railway clock — Indian Standard Time, 24-hour.
+function tickClock(){
+  const now = new Date();
+  document.getElementById('railTime').textContent = now.toLocaleTimeString('en-GB',{timeZone:'Asia/Kolkata',hourCycle:'h23'});
+  document.getElementById('railDate').textContent = now.toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata',weekday:'short',day:'2-digit',month:'short',year:'numeric'});
+}
+tickClock(); setInterval(tickClock, 1000);
+
+let activeReschedId = null;
+let activeReschedReqId = null;
+function openModal(reqId){
+  const row = data.find(d=>d.reqId===reqId);
+  activeReschedId = row.internalId;
+  activeReschedReqId = reqId;
+  document.getElementById('modalId').textContent = reqId;
+  var _dt = document.getElementById('modalDateTime'); if (_dt._flatpickr) _dt._flatpickr.clear(); else _dt.value = '';
+  document.getElementById('modalReason').value = '';
+  document.getElementById('modalForm').style.display = '';
+  document.getElementById('modalConfirmed').style.display = 'none';
+  document.getElementById('overlay').classList.add('show');
+}
+document.getElementById('modalCancel').addEventListener('click',()=>document.getElementById('overlay').classList.remove('show'));
+document.getElementById('modalConfirm').addEventListener('click',()=>{
+  const val = document.getElementById('modalDateTime').value;
+  const reason = document.getElementById('modalReason').value.trim();
+  if(!val || !activeReschedId) return;
+  if(!reason){ alert('Please write a reason for rescheduling before submitting.'); return; }
+  const url = RESCHED_URL.replace('/0/', '/'+activeReschedId+'/');
+  postForm(url, {start: val, reason: reason}).then(()=>{
+    document.getElementById('modalForm').style.display = 'none';
+    document.getElementById('confirmedId').textContent = activeReschedReqId;
+    document.getElementById('confirmedDT').textContent = new Date(val).toLocaleString('en-IN',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:false});
+    document.getElementById('confirmedReason').textContent = reason;
+    document.getElementById('modalConfirmed').style.display = '';
+  });
+});
+document.getElementById('modalDone').addEventListener('click',()=>{
+  document.getElementById('overlay').classList.remove('show');
+  location.reload();
+});
+
+// ---------------------------------------------------------------------
+// Communication — mirrors the Station Master dashboard's layout:
+// a "Workers" tab for per-request chats with field workers, plus one
+// tab per other department (Station Control / Division Control).
+// ---------------------------------------------------------------------
+const DEPT_CONTACTS = (PAGE.contacts||[]).filter(c=>c.code==='STATION'||c.code==='DIVISION');
+const WORKERS = data.filter(r=>r.worker && r.worker.name);
+let activeCommTab = 'workers';
+let cw = WORKERS.length ? WORKERS[0].reqId : null;
+let activeDept = null;
+
+function setCommTab(tab){
+  document.querySelectorAll('.comm-tabs .btn').forEach(b=>b.classList.remove('primary'));
+  if(tab==='workers'){
+    activeCommTab='workers';
+    document.getElementById('commTabWorkers').classList.add('primary');
+    document.getElementById('commWorkers').style.display='';
+    document.getElementById('commDept').style.display='none';
+    renderWorkerChat();
+    return;
+  }
+  activeCommTab='dept'; activeDept=tab;
+  document.getElementById('commWorkers').style.display='none';
+  document.getElementById('commDept').style.display='';
+  document.getElementById('commTab'+tab).classList.add('primary');
+  renderDeptChat();
+}
+document.getElementById('commTabWorkers').addEventListener('click',()=>setCommTab('workers'));
+document.getElementById('commTabSTATION').addEventListener('click',()=>setCommTab('STATION'));
+document.getElementById('commTabDIVISION').addEventListener('click',()=>setCommTab('DIVISION'));
+
+function renderWorkerList(){
+  const q = (document.getElementById('wQ').value||'').trim().toLowerCase();
+  const rows = WORKERS.filter(r=>!q || (r.worker.name+' '+r.work+' '+r.reqId).toLowerCase().includes(q));
+  document.getElementById('wItems').innerHTML = rows.length ? rows.map(r=>`
+    <div class="worker-item ${r.reqId===cw?'active':''}" data-id="${r.reqId}">
+      <div class="wav">${(r.worker.name||'?').slice(0,2).toUpperCase()}<span class="stat-dot" style="background:${r.worker.online?'var(--green)':'var(--muted)'}"></span></div>
+      <div><div class="wname">${r.worker.name}</div><div class="wrole">${r.worker.role} &middot; ${r.reqId}</div></div>
+    </div>`).join('') : `<div class="empty">No workers found.</div>`;
+  document.querySelectorAll('#wItems .worker-item').forEach(el=>el.addEventListener('click',()=>{cw=el.dataset.id;renderWorkerChat()}));
+}
+function renderWorkerChat(){
+  const r = WORKERS.find(x=>x.reqId===cw);
+  if(!r){
+    document.getElementById('chatName').textContent=''; document.getElementById('chatRole').textContent='';
+    document.getElementById('chatStatus').innerHTML='';
+    document.getElementById('chatMsgs').innerHTML = `<div class="empty">Select a worker.</div>`;
+    return;
+  }
+  document.getElementById('chatName').textContent = r.worker.name;
+  document.getElementById('chatRole').textContent = `${r.worker.role} · ${r.reqId}`;
+  document.getElementById('chatStatus').innerHTML = r.worker.online ? '<span class="badge green">ACTIVE</span>' : '<span class="badge yellow">IDLE</span>';
+  const msgs = M[r.reqId] || [];
+  document.getElementById('chatMsgs').innerHTML = msgs.length ? msgs.map(m=>`<div class="msg ${m.dir}">${m.t}<span class="meta">${m.time}</span></div>`).join('') : `<div class="empty">No messages yet. Send the first one below.</div>`;
+}
+document.getElementById('wQ').addEventListener('input',renderWorkerList);
+document.getElementById('chatSend').addEventListener('click',sendWorkerMsg);
+document.getElementById('chatInput').addEventListener('keydown',e=>{if(e.key==='Enter')sendWorkerMsg()});
+function sendWorkerMsg(){
+  const inp = document.getElementById('chatInput');
+  const r = WORKERS.find(x=>x.reqId===cw);
+  if(!inp.value.trim() || !r) return;
+  const url = REQ_MSG_URL.replace('/0/', '/'+r.internalId+'/');
+  postForm(url, {body: inp.value.trim()}).then(()=>location.reload());
+}
+
+function renderDeptChat(){
+  const c = DEPT_CONTACTS.find(x=>x.code===activeDept);
+  document.getElementById('deptChatName').textContent = c ? c.label : '';
+  document.getElementById('deptChatMsgs').innerHTML = (c && c.messages.length) ? c.messages.map(m=>`<div class="msg ${m.dir}">${m.t}<span class="meta">${m.time}</span></div>`).join('') : `<div class="empty">No messages yet. Send the first one below.</div>`;
+}
+document.getElementById('deptChatSend').addEventListener('click',sendDeptMsg);
+document.getElementById('deptChatInput').addEventListener('keydown',e=>{if(e.key==='Enter')sendDeptMsg()});
+function sendDeptMsg(){
+  const inp = document.getElementById('deptChatInput');
+  if(!inp.value.trim() || !activeDept) return;
+  postForm(MSG_URL, {department: activeDept, body: inp.value.trim()}).then(()=>location.reload());
+}
+
+function renderComm(){
+  renderWorkerList();
+  if(activeCommTab==='workers') renderWorkerChat(); else renderDeptChat();
+}
+
+renderNav(); setupFilters(); setupGlobalFilters(); renderFiltered(); renderComm();
+(function(){const h=(location.hash||'#dashboard').slice(1); if(NAV.find(n=>n.id===h)) go(h); else go('dashboard');})();
+</script>
+{% include '_datepicker.html' %}
+</body>
+</html>
