@@ -1,6 +1,7 @@
 ```html
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,13 +16,19 @@
             font-family: Arial, Helvetica, sans-serif;
         }
 
+        html {
+            scroll-behavior: smooth;
+        }
+
         body {
             background: #080b12;
             color: white;
             min-height: 100vh;
         }
 
-        /* Navbar */
+        /* =========================
+           NAVBAR
+        ========================= */
 
         nav {
             height: 70px;
@@ -29,17 +36,20 @@
             align-items: center;
             justify-content: space-between;
             padding: 0 7%;
-            background: rgba(10, 14, 24, 0.95);
+
+            background: rgba(10, 14, 24, 0.96);
             border-bottom: 1px solid #20283a;
+
             position: sticky;
             top: 0;
-            z-index: 100;
+            z-index: 1000;
         }
 
         .logo {
             font-size: 21px;
             font-weight: bold;
             color: #4da3ff;
+            letter-spacing: 1px;
         }
 
         .nav-links {
@@ -58,17 +68,28 @@
             color: #4da3ff;
         }
 
-        /* Hero */
+
+        /* =========================
+           HERO
+        ========================= */
 
         .hero {
-            min-height: 430px;
+            min-height: 480px;
+
             display: flex;
             align-items: center;
             justify-content: center;
+
             text-align: center;
-            padding: 70px 20px;
+
+            padding: 80px 20px;
+
             background:
-                radial-gradient(circle at center, #102544 0%, #080b12 60%);
+                radial-gradient(
+                    circle at center,
+                    #102544 0%,
+                    #080b12 60%
+                );
         }
 
         .hero-content {
@@ -77,12 +98,18 @@
 
         .badge {
             display: inline-block;
+
             padding: 8px 16px;
+
             border: 1px solid #2768a8;
             border-radius: 30px;
+
             color: #62b1ff;
+
             font-size: 13px;
+
             margin-bottom: 22px;
+
             background: rgba(40, 120, 200, 0.08);
         }
 
@@ -98,25 +125,37 @@
 
         .hero p {
             color: #aab5c5;
+
             font-size: 17px;
+
             line-height: 1.7;
+
             max-width: 700px;
+
             margin: auto;
         }
 
         .hero-buttons {
             margin-top: 30px;
+
             display: flex;
+
             justify-content: center;
+
             gap: 15px;
         }
 
         .btn {
             padding: 13px 25px;
+
             border-radius: 8px;
+
             text-decoration: none;
+
             font-size: 14px;
+
             cursor: pointer;
+
             transition: 0.3s;
         }
 
@@ -127,32 +166,40 @@
 
         .primary:hover {
             background: #3192ed;
+
             transform: translateY(-2px);
         }
 
         .secondary {
             border: 1px solid #334157;
+
             color: #d2d9e3;
         }
 
         .secondary:hover {
             border-color: #4da3ff;
+
             color: #4da3ff;
         }
 
-        /* Dashboard Section */
+
+        /* =========================
+           SECTION
+        ========================= */
 
         .section {
-            padding: 70px 7%;
+            padding: 75px 7%;
         }
 
         .section-title {
             text-align: center;
-            margin-bottom: 40px;
+
+            margin-bottom: 45px;
         }
 
         .section-title h2 {
             font-size: 30px;
+
             margin-bottom: 10px;
         }
 
@@ -160,72 +207,135 @@
             color: #8e9bad;
         }
 
+
+        /* =========================
+           DASHBOARD CARDS
+        ========================= */
+
         .dashboard-grid {
             max-width: 1100px;
+
             margin: auto;
+
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
+
+            grid-template-columns:
+                repeat(3, 1fr);
+
+            gap: 22px;
         }
 
         .dashboard-card {
             background: #111722;
+
             border: 1px solid #252f40;
+
             border-radius: 15px;
-            padding: 25px;
+
+            padding: 27px;
+
             transition: 0.3s;
+
             position: relative;
+
             overflow: hidden;
+        }
+
+        .dashboard-card::before {
+            content: "";
+
+            position: absolute;
+
+            width: 100px;
+            height: 100px;
+
+            background: #2679c9;
+
+            filter: blur(70px);
+
+            opacity: 0.12;
+
+            top: -30px;
+            right: -30px;
         }
 
         .dashboard-card:hover {
             transform: translateY(-6px);
+
             border-color: #348fe1;
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.35);
+
+            box-shadow:
+                0 15px 40px rgba(0, 0, 0, 0.35);
         }
 
         .icon {
-            width: 48px;
-            height: 48px;
+            width: 50px;
+            height: 50px;
+
             display: flex;
+
             align-items: center;
             justify-content: center;
+
             border-radius: 12px;
+
             background: #162a42;
+
             color: #59acff;
-            font-size: 22px;
+
+            font-size: 23px;
+
             margin-bottom: 18px;
         }
 
         .dashboard-card h3 {
             margin-bottom: 10px;
+
             font-size: 19px;
         }
 
         .dashboard-card p {
             color: #8995a8;
+
             font-size: 14px;
+
             line-height: 1.6;
+
+            min-height: 68px;
+
             margin-bottom: 20px;
         }
 
         .open-btn {
             display: inline-block;
-            padding: 9px 15px;
+
+            padding: 10px 16px;
+
             background: #182d45;
+
             color: #65b4ff;
+
             border-radius: 7px;
+
             text-decoration: none;
+
             font-size: 13px;
+
             transition: 0.3s;
         }
 
         .open-btn:hover {
             background: #2679c9;
+
             color: white;
+
+            transform: translateX(3px);
         }
 
-        /* Features */
+
+        /* =========================
+           FEATURES
+        ========================= */
 
         .features {
             background: #0d1119;
@@ -233,80 +343,133 @@
 
         .feature-grid {
             max-width: 1100px;
+
             margin: auto;
+
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+
+            grid-template-columns:
+                repeat(4, 1fr);
+
             gap: 18px;
         }
 
         .feature {
             padding: 25px;
+
             border: 1px solid #222c3b;
+
             border-radius: 12px;
+
             background: #111722;
+
+            transition: 0.3s;
+        }
+
+        .feature:hover {
+            border-color: #348fe1;
+
+            transform: translateY(-4px);
         }
 
         .feature h3 {
             margin-bottom: 9px;
+
             font-size: 16px;
         }
 
         .feature p {
             color: #8995a8;
+
             font-size: 13px;
+
             line-height: 1.6;
         }
 
-        /* Technology */
+
+        /* =========================
+           TECHNOLOGY
+        ========================= */
 
         .tech {
             text-align: center;
-            padding: 60px 20px;
+
+            padding: 70px 20px;
         }
 
         .tech-list {
             display: flex;
+
             justify-content: center;
+
             flex-wrap: wrap;
+
             gap: 12px;
+
             margin-top: 25px;
         }
 
         .tech-item {
             padding: 10px 18px;
+
             border: 1px solid #2b394c;
+
             border-radius: 25px;
+
             color: #aeb9c8;
+
             background: #101620;
+
             font-size: 13px;
+
+            transition: 0.3s;
         }
 
-        /* Footer */
+        .tech-item:hover {
+            border-color: #4da3ff;
+
+            color: #4da3ff;
+        }
+
+
+        /* =========================
+           FOOTER
+        ========================= */
 
         footer {
             text-align: center;
-            padding: 25px;
+
+            padding: 28px;
+
             border-top: 1px solid #20283a;
+
             color: #687487;
+
             font-size: 13px;
         }
 
-        /* Responsive */
+
+        /* =========================
+           RESPONSIVE
+        ========================= */
 
         @media (max-width: 900px) {
 
             .dashboard-grid {
-                grid-template-columns: repeat(2, 1fr);
+                grid-template-columns:
+                    repeat(2, 1fr);
             }
 
             .feature-grid {
-                grid-template-columns: repeat(2, 1fr);
+                grid-template-columns:
+                    repeat(2, 1fr);
             }
 
             .hero h1 {
                 font-size: 40px;
             }
         }
+
 
         @media (max-width: 600px) {
 
@@ -325,33 +488,58 @@
 
             .hero-buttons {
                 flex-direction: column;
+
                 align-items: center;
             }
 
             .btn {
-                width: 200px;
+                width: 220px;
             }
         }
     </style>
+
 </head>
+
 
 <body>
 
-    <!-- Navigation -->
+
+    <!-- =========================
+         NAVIGATION
+    ========================= -->
 
     <nav>
-        <div class="logo">RAILWAY SYSTEM</div>
+
+        <div class="logo">
+            RAILWAY SYSTEM
+        </div>
 
         <div class="nav-links">
-            <a href="#home">Home</a>
-            <a href="#dashboards">Dashboards</a>
-            <a href="#features">Features</a>
-            <a href="#technology">Technology</a>
+
+            <a href="#home">
+                Home
+            </a>
+
+            <a href="#dashboards">
+                Dashboards
+            </a>
+
+            <a href="#features">
+                Features
+            </a>
+
+            <a href="#technology">
+                Technology
+            </a>
+
         </div>
+
     </nav>
 
 
-    <!-- Hero -->
+    <!-- =========================
+         HERO
+    ========================= -->
 
     <section class="hero" id="home">
 
@@ -367,18 +555,25 @@
             </h1>
 
             <p>
-                A centralized digital platform for managing railway assets,
-                maintenance activities, workforce operations, approvals,
+                A centralized digital platform for managing
+                railway assets, maintenance activities,
+                workforce operations, approvals,
                 requests and live train information.
             </p>
 
             <div class="hero-buttons">
 
-                <a href="#dashboards" class="btn primary">
+                <a
+                    href="#dashboards"
+                    class="btn primary"
+                >
                     Explore Dashboards
                 </a>
 
-                <a href="#features" class="btn secondary">
+                <a
+                    href="#features"
+                    class="btn secondary"
+                >
                     View Features
                 </a>
 
@@ -389,16 +584,24 @@
     </section>
 
 
-    <!-- Dashboards -->
+    <!-- =========================
+         DASHBOARDS
+    ========================= -->
 
-    <section class="section" id="dashboards">
+    <section
+        class="section"
+        id="dashboards"
+    >
 
         <div class="section-title">
 
-            <h2>System Dashboards</h2>
+            <h2>
+                System Dashboards
+            </h2>
 
             <p>
-                Access different railway department operations from one platform.
+                Access different railway department
+                operations from one platform.
             </p>
 
         </div>
@@ -406,120 +609,170 @@
 
         <div class="dashboard-grid">
 
-            <!-- Station Master -->
+
+            <!-- STATION MASTER -->
 
             <div class="dashboard-card">
 
-                <div class="icon">🚉</div>
+                <div class="icon">
+                    🚉
+                </div>
 
-                <h3>Station Master</h3>
+                <h3>
+                    Station Master
+                </h3>
 
                 <p>
-                    Monitor station assets, requests, approvals,
-                    priority maintenance and operational activities.
+                    Monitor station assets, requests,
+                    approvals, priority maintenance
+                    and operational activities.
                 </p>
 
-                <a href="#" class="open-btn">
+                <!-- CONNECTED TO DJANGO -->
+
+                <a
+                    href="http://127.0.0.1:8000/bdms/station-dashboard/"
+                    class="open-btn"
+                >
                     Open Dashboard →
                 </a>
 
             </div>
 
 
-            <!-- Worker -->
+            <!-- WORKER -->
 
             <div class="dashboard-card">
 
-                <div class="icon">👷</div>
+                <div class="icon">
+                    👷
+                </div>
 
-                <h3>Worker Dashboard</h3>
+                <h3>
+                    Worker Dashboard
+                </h3>
 
                 <p>
                     Manage assigned works, accepted works,
                     active maintenance and completed tasks.
                 </p>
 
-                <a href="#" class="open-btn">
+                <a
+                    href="http://127.0.0.1:8000/bdms/worker-dashboard/"
+                    class="open-btn"
+                >
                     Open Dashboard →
                 </a>
 
             </div>
 
 
-            <!-- Division -->
+            <!-- DIVISION MASTER -->
 
             <div class="dashboard-card">
 
-                <div class="icon">🏢</div>
+                <div class="icon">
+                    🏢
+                </div>
 
-                <h3>Division Master</h3>
+                <h3>
+                    Division Master
+                </h3>
 
                 <p>
-                    Monitor division-level requests, approvals,
-                    railway assets and maintenance activities.
+                    Monitor division-level requests,
+                    approvals, railway assets
+                    and maintenance activities.
                 </p>
 
-                <a href="#" class="open-btn">
+                <a
+                    href="http://127.0.0.1:8000/bdms/division-dashboard/"
+                    class="open-btn"
+                >
                     Open Dashboard →
                 </a>
 
             </div>
 
 
-            <!-- Control Office -->
+            <!-- CONTROL OFFICE -->
 
             <div class="dashboard-card">
 
-                <div class="icon">🎛️</div>
+                <div class="icon">
+                    🎛️
+                </div>
 
-                <h3>Control Office</h3>
+                <h3>
+                    Control Office
+                </h3>
 
                 <p>
-                    Coordinate railway operations and monitor
-                    department-level activities.
+                    Coordinate railway operations
+                    and monitor department-level
+                    activities.
                 </p>
 
-                <a href="#" class="open-btn">
+                <a
+                    href="http://127.0.0.1:8000/bdms/control-office/"
+                    class="open-btn"
+                >
                     Open Dashboard →
                 </a>
 
             </div>
 
 
-            <!-- Live Train -->
+            <!-- LIVE TRAIN -->
 
             <div class="dashboard-card">
 
-                <div class="icon">🚆</div>
+                <div class="icon">
+                    🚆
+                </div>
 
-                <h3>Live Train Dashboard</h3>
+                <h3>
+                    Live Train Dashboard
+                </h3>
 
                 <p>
-                    Monitor train movement, locations,
-                    routes and real-time operational information.
+                    Monitor train movement,
+                    locations, routes and
+                    real-time operational information.
                 </p>
 
-                <a href="#" class="open-btn">
+                <a
+                    href="http://127.0.0.1:8000/bdms/live-trains/"
+                    class="open-btn"
+                >
                     View Live Trains →
                 </a>
 
             </div>
 
 
-            <!-- AI Suggestions -->
+            <!-- AI SUGGESTIONS -->
 
             <div class="dashboard-card">
 
-                <div class="icon">🤖</div>
+                <div class="icon">
+                    🤖
+                </div>
 
-                <h3>AI Suggestions</h3>
+                <h3>
+                    AI Suggestions
+                </h3>
 
                 <p>
-                    Analyze maintenance information and provide
-                    intelligent suggestions for railway operations.
+                    Analyze maintenance information
+                    and provide intelligent suggestions
+                    for railway operations.
                 </p>
 
-                <a href="#" class="open-btn">
+                <a
+                    href="http://127.0.0.1:8000/bdms/ai-suggestions/"
+                    class="open-btn"
+                >
                     View Suggestions →
                 </a>
 
@@ -530,16 +783,24 @@
     </section>
 
 
-    <!-- Features -->
+    <!-- =========================
+         FEATURES
+    ========================= -->
 
-    <section class="section features" id="features">
+    <section
+        class="section features"
+        id="features"
+    >
 
         <div class="section-title">
 
-            <h2>Key Features</h2>
+            <h2>
+                Key Features
+            </h2>
 
             <p>
-                Designed to simplify railway department management.
+                Designed to simplify railway
+                department management.
             </p>
 
         </div>
@@ -547,75 +808,123 @@
 
         <div class="feature-grid">
 
+
             <div class="feature">
-                <h3>📊 Asset Management</h3>
+
+                <h3>
+                    📊 Asset Management
+                </h3>
+
                 <p>
-                    Track railway assets and maintenance requirements
+                    Track railway assets and
+                    maintenance requirements
                     from a centralized dashboard.
                 </p>
+
             </div>
 
 
             <div class="feature">
-                <h3>📝 Work Requests</h3>
+
+                <h3>
+                    📝 Work Requests
+                </h3>
+
                 <p>
-                    Create, manage and monitor maintenance requests
+                    Create, manage and monitor
+                    maintenance requests
                     across departments.
                 </p>
+
             </div>
 
 
             <div class="feature">
-                <h3>✅ Approval System</h3>
+
+                <h3>
+                    ✅ Approval System
+                </h3>
+
                 <p>
-                    Manage station, worker and division approval
-                    workflows.
+                    Manage station, worker
+                    and division approval workflows.
                 </p>
+
             </div>
 
 
             <div class="feature">
-                <h3>🚆 Live Monitoring</h3>
+
+                <h3>
+                    🚆 Live Monitoring
+                </h3>
+
                 <p>
-                    Monitor train movement and operational
-                    information through the live dashboard.
+                    Monitor train movement
+                    and operational information
+                    through the live dashboard.
                 </p>
+
             </div>
 
 
             <div class="feature">
-                <h3>👷 Workforce Management</h3>
+
+                <h3>
+                    👷 Workforce Management
+                </h3>
+
                 <p>
-                    Track assigned, accepted, active and completed
+                    Track assigned, accepted,
+                    active and completed
                     maintenance works.
                 </p>
+
             </div>
 
 
             <div class="feature">
-                <h3>🤖 AI Assistance</h3>
+
+                <h3>
+                    🤖 AI Assistance
+                </h3>
+
                 <p>
-                    Generate intelligent suggestions based on
-                    railway maintenance information.
+                    Generate intelligent suggestions
+                    based on railway maintenance
+                    information.
                 </p>
+
             </div>
 
 
             <div class="feature">
-                <h3>🔐 Role Based Access</h3>
+
+                <h3>
+                    🔐 Role Based Access
+                </h3>
+
                 <p>
-                    Provide different dashboard access based on
-                    department and user roles.
+                    Provide different dashboard
+                    access based on department
+                    and user roles.
                 </p>
+
             </div>
 
 
             <div class="feature">
-                <h3>📱 Responsive UI</h3>
+
+                <h3>
+                    📱 Responsive UI
+                </h3>
+
                 <p>
-                    Access the management system from desktop,
-                    tablet and mobile devices.
+                    Access the management system
+                    from desktop, tablet
+                    and mobile devices.
                 </p>
+
             </div>
 
         </div>
@@ -623,94 +932,88 @@
     </section>
 
 
-    <!-- Technology -->
+    <!-- =========================
+         TECHNOLOGY
+    ========================= -->
 
-    <section class="tech" id="technology">
+    <section
+        class="tech"
+        id="technology"
+    >
 
         <div class="section-title">
 
-            <h2>Technology Stack</h2>
+            <h2>
+                Technology Stack
+            </h2>
 
             <p>
-                Technologies used to develop the railway management platform.
+                Technologies used to develop
+                the railway management platform.
             </p>
 
         </div>
 
+
         <div class="tech-list">
 
-            <div class="tech-item">HTML</div>
-            <div class="tech-item">CSS</div>
-            <div class="tech-item">JavaScript</div>
-            <div class="tech-item">React.js</div>
-            <div class="tech-item">Python</div>
-            <div class="tech-item">Django</div>
-            <div class="tech-item">FastAPI</div>
-            <div class="tech-item">REST API</div>
-            <div class="tech-item">MySQL</div>
+            <div class="tech-item">
+                HTML
+            </div>
+
+            <div class="tech-item">
+                CSS
+            </div>
+
+            <div class="tech-item">
+                JavaScript
+            </div>
+
+            <div class="tech-item">
+                React.js
+            </div>
+
+            <div class="tech-item">
+                Python
+            </div>
+
+            <div class="tech-item">
+                Django
+            </div>
+
+            <div class="tech-item">
+                FastAPI
+            </div>
+
+            <div class="tech-item">
+                REST API
+            </div>
+
+            <div class="tech-item">
+                MySQL
+            </div>
 
         </div>
 
     </section>
 
 
-    <!-- Footer -->
+    <!-- =========================
+         FOOTER
+    ========================= -->
 
     <footer>
 
-        © 2026 Railway Department Management System |
+        © 2026 Railway Department Management System
+
+        <br><br>
+
         Developed for Railway Operations
 
     </footer>
 
 
-    <script>
-
-        // Smooth scrolling
-
-        document.querySelectorAll('a[href^="#"]').forEach(link => {
-
-            link.addEventListener("click", function(event) {
-
-                const target = document.querySelector(this.getAttribute("href"));
-
-                if (target) {
-
-                    event.preventDefault();
-
-                    target.scrollIntoView({
-                        behavior: "smooth"
-                    });
-
-                }
-
-            });
-
-        });
-
-
-        // Dashboard button demonstration
-
-        document.querySelectorAll(".open-btn").forEach(button => {
-
-            button.addEventListener("click", function(event) {
-
-                if (this.getAttribute("href") === "#") {
-
-                    event.preventDefault();
-
-                    alert(
-                        "Connect this button to your Django dashboard URL."
-                    );
-
-                }
-
-            });
-
-        });
-
-    </script>
-
 </body>
+
 </html>
 ```
