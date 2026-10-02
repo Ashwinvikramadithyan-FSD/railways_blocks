@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Railway Department Dashboard</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            min-height: 100vh;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #07111f, #102a43);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 700px;
+            padding: 45px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 25px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(15px);
+        }
+
+        .logo {
+            font-size: 55px;
+            margin-bottom: 10px;
+        }
+
+        h1 {
+            font-size: 30px;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: #b8c7d9;
+            margin-bottom: 30px;
+        }
+
+        .dashboard-list {
+            display: grid;
+            gap: 15px;
+        }
+
+        .dashboard {
+            display: block;
+            padding: 18px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: white;
+            text-decoration: none;
+            font-size: 18px;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .dashboard:hover {
+            transform: translateY(-3px);
+            background: rgba(255, 255, 255, 0.18);
+        }
+
+        footer {
+            margin-top: 30px;
+            color: #8fa3b8;
+            font-size: 13px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+        <div class="logo">🚆</div>
+
+        <h1>Railway Department</h1>
+
+        <p class="subtitle">
+            Railway Management & Monitoring System
+        </p>
+
+        <div class="dashboard-list">
+
+            <a class="dashboard" href="#">
+                Station Master Dashboard
+            </a>
+
+            <a class="dashboard" href="#">
+                Worker Dashboard
+            </a>
+
+            <a class="dashboard" href="#">
+                Division Master Dashboard
+            </a>
+
+            <a class="dashboard" href="#">
+                Control Office Dashboard
+            </a>
+
+            <a class="dashboard" href="#">
+                Live Train Dashboard
+            </a>
+
+        </div>
+
+        <footer>
+            Railway Department Management System
+        </footer>
+
+    </div>
+
+</body>
+</html>
+
